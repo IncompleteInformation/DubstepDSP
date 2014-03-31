@@ -45,45 +45,46 @@ static void onKeyPress (GLFWwindow* window, int key, int scancode, int action, i
         glfwSetWindowShouldClose(window, GL_TRUE);
 }
 
-static int onAudioSync( const void *inputBuffer, void *outputBuffer,
-                            unsigned long framesPerBuffer,
-                            const PaStreamCallbackTimeInfo* timeInfo,
-                            PaStreamCallbackFlags statusFlags,
-                            void *userData )
+static int onAudioSync (const void* inputBuffer, void* outputBuffer,
+                        unsigned long framesPerBuffer,
+                        const PaStreamCallbackTimeInfo* timeInfo,
+                        PaStreamCallbackFlags statusFlags,
+                        void* thunk)
 {
-    paTestData *data = (paTestData*)userData;
-    float *out = (float*)outputBuffer;
-    unsigned long i;
+    paTestData* data = (paTestData*)thunk;
+    float* in = (float*)inputBuffer;
+    float* out = (float*)outputBuffer;
 
-    (void) timeInfo; /* Prevent unused variable warnings. */
-    (void) statusFlags;
-    (void) inputBuffer;
-    
-    for (i=0; i<framesPerBuffer; i++ )
+    for (int i = 0; i < framesPerBuffer; ++i)
     {
-        *out++ = data->sine[data->left_phase];
-        *out++ = data->sine[data->right_phase];
-        data->left_phase += 1;
-        if( data->left_phase >= TABLE_SIZE ) data->left_phase -= TABLE_SIZE;
-        data->right_phase += 1; /* higher pitch so we can distinguish left and right. */
-        if( data->right_phase >= TABLE_SIZE ) data->right_phase -= TABLE_SIZE;
+        if (in[i] > 0.1 || in[i] < -0.1) printf("%2f\n", in[i]);
     }
     
     return paContinue;
 }
 
-int main(void)
+int main (void)
 {
     // Create sine wave
     paTestData data;
-    for(int i=0; i<TABLE_SIZE; i++ )
+    for(int i = 0; i < TABLE_SIZE; ++i)
     {
-        data.sine[i] = (float) sin( ((double)i/(double)TABLE_SIZE) * M_PI * 2. );
+        data.sine[i] = (float)sin(((double)i/(double)TABLE_SIZE) * M_PI * 2.);
     }
     data.left_phase = data.right_phase = 0;
 
     // Initialize PortAudio
     paCheckError(Pa_Initialize());
+
+    // Configure stream input
+    PaStreamParameters in;
+    in.device = Pa_GetDefaultInputDevice();
+    in.channelCount = 1;
+    in.sampleFormat = paFloat32;
+    in.suggestedLatency = Pa_GetDeviceInfo(in.device)->defaultLowInputLatency;
+    in.hostApiSpecificStreamInfo = NULL;
+
+    // Configure stream output
     PaStreamParameters out;
     out.device = Pa_GetDefaultOutputDevice();
     if (out.device == paNoDevice) {
@@ -99,7 +100,7 @@ int main(void)
     PaStream *stream;
     paCheckError(Pa_OpenStream(
                  &stream,
-                 NULL, /* no input */
+                 &in,
                  &out,
                  SAMPLE_RATE,
                  FRAMES_PER_BUFFER,
