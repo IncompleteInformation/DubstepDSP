@@ -1,4 +1,4 @@
-default: audio video test-audio test-video
+default: audio video combined test-combined
 
 audio: audio.c
 	@clang audio.c -o audio \
@@ -6,7 +6,17 @@ audio: audio.c
 
 video: video.c
 	@clang video.c -o video \
-		-lglfw3 -framework Cocoa \
+		-lglfw3 \
+		-framework Cocoa \
+		-framework IOKit \
+		-framework OpenGL \
+		-framework CoreVideo
+
+combined: combined.c
+	@clang combined.c -o combined \
+		-lportaudio \
+		-lglfw3 \
+		-framework Cocoa \
 		-framework IOKit \
 		-framework OpenGL \
 		-framework CoreVideo
@@ -16,3 +26,6 @@ test-audio: audio
 
 test-video: video
 	@./video
+
+test-combined: combined
+	@./combined
