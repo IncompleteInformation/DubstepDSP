@@ -1,7 +1,12 @@
 ## Dependencies
-```brew install portaudio```
+```
+brew install portaudio
+```
 
 - **PortAudio:** http://www.portaudio.com/
 
 ## Building
-```make```
+
+```
+make
+```
