@@ -1,7 +1,18 @@
-default: audio test-audio
+default: audio video test-audio test-video
 
-audio:
-	@clang audio.c -lportaudio -o audio
+audio: audio.c
+	@clang audio.c -o audio \
+		-lportaudio
 
-test-audio:
+video: video.c
+	@clang video.c -o video \
+		-lglfw3 -framework Cocoa \
+		-framework IOKit \
+		-framework OpenGL \
+		-framework CoreVideo
+
+test-audio: audio
 	@./audio
+
+test-video: video
+	@./video

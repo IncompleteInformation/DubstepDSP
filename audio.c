@@ -45,7 +45,7 @@
 #include <math.h>
 #include "portaudio.h"
 
-#define NUM_SECONDS   (5)
+#define NUM_SECONDS   (2)
 #define SAMPLE_RATE   (44100)
 #define FRAMES_PER_BUFFER  (64)
 
