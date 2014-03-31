@@ -51,6 +51,7 @@ static int onAudioSync( const void *inputBuffer, void *outputBuffer,
                             PaStreamCallbackFlags statusFlags,
                             void *userData )
 {
+    printf("%li", framesPerBuffer);
     paTestData *data = (paTestData*)userData;
     float *out = (float*)outputBuffer;
     unsigned long i;
@@ -65,7 +66,7 @@ static int onAudioSync( const void *inputBuffer, void *outputBuffer,
         *out++ = data->sine[data->right_phase];
         data->left_phase += 1;
         if( data->left_phase >= TABLE_SIZE ) data->left_phase -= TABLE_SIZE;
-        data->right_phase += 1; /* higher pitch so we can distinguish left and right. */
+        data->right_phase += 8; /* higher pitch so we can distinguish left and right. */
         if( data->right_phase >= TABLE_SIZE ) data->right_phase -= TABLE_SIZE;
     }
     
