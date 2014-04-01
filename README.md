@@ -10,6 +10,9 @@ make install # MAY NEED SUDO
 
 # Install PortAudio
 brew install portaudio
+
+# Install fftw3
+brew install fftw
 ```
 
 - **GLFW:** http://www.glfw.org/

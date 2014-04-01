@@ -3,6 +3,7 @@
 // #define GLFW_INCLUDE_GLCOREARB
 #include <GLFW/glfw3.h>
 #include <portaudio.h>
+#include <fftw3.h>
 
 #include <math.h>
 #include <stdlib.h>
@@ -11,6 +12,7 @@
 #define SAMPLE_RATE   (44100)
 #define BUFFER_SIZE   (65536)
 #define FRAMES_PER_BUFFER  (64)
+#define FFT_SIZE (512) //512 = 11ms delay, 86Hz bins
 
 #ifndef M_PI
 #define M_PI  (3.14159265)
@@ -19,6 +21,14 @@
 float data[BUFFER_SIZE];
 float bufferData[BUFFER_SIZE];
 PaUtilRingBuffer buffer;
+
+typedef struct
+{
+    float fft_buffer[FFT_SIZE];
+    int fft_buffer_loc;
+}
+fftBuffer;
+fftBuffer fftBuf;
 
 static void glfwError (int error, const char* description)
 {
@@ -41,7 +51,80 @@ static void onKeyPress (GLFWwindow* window, int key, int scancode, int action, i
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
         glfwSetWindowShouldClose(window, GL_TRUE);
 }
+static double abs_complex(double real, double imag)
+{
+    return sqrt(pow(real,2)+pow(imag,2));
+}
+static void perform_fft()
+{
+    int i;
+    double *in;
+    int nout;
+    fftw_complex *out;
+    fftw_plan plan_backward;
+    fftw_plan plan_forward;
 
+/*
+  Set up an array to hold the data, and assign the data.
+*/
+    in = fftw_malloc ( sizeof ( double ) * FFT_SIZE );
+
+    for ( i = 0; i < FFT_SIZE; i++ )
+    {
+        in[i] = (double)fftBuf.fft_buffer[i];
+    }
+
+    // printf ( "\n" );
+    // printf ( "  Input Data:\n" );
+    // printf ( "\n" );
+
+    // for ( i = 0; i < FFT_SIZE; i++ )
+    // {
+    //     printf ( "  %4d  %12f\n", i, in[i] );
+    // }
+    /*
+    Set up an array to hold the transformed data,
+    get a "plan", and execute the plan to transform the IN data to
+    the OUT FFT coefficients.
+    */
+    nout = ( FFT_SIZE / 2 ) + 1;
+
+    out = fftw_malloc ( sizeof ( fftw_complex ) * nout );
+
+    plan_forward = fftw_plan_dft_r2c_1d ( FFT_SIZE, in, out, FFTW_ESTIMATE );
+
+    fftw_execute ( plan_forward );
+
+    printf ( "\n" );
+    printf ( "  Output FFT Coefficients:\n" );
+    printf ( "\n" );
+
+    for ( i = 0; i < nout; i++ )
+    {
+        printf ( "  %4d  %12f\n", i, abs_complex(out[i][0], out[i][1]) );
+    }
+
+    /*
+    Release the memory associated with the plans.
+    */
+    fftw_destroy_plan ( plan_forward );
+
+    fftw_free ( in );
+    fftw_free ( out );
+
+    return;
+}
+static void update_fft_buffer(float mic_bit)
+{
+    fftBuf.fft_buffer[fftBuf.fft_buffer_loc] = mic_bit;
+    ++fftBuf.fft_buffer_loc;
+    if (fftBuf.fft_buffer_loc==FFT_SIZE)
+        {
+            fftBuf.fft_buffer_loc=0;
+            perform_fft();
+            //for (int i=0;i<FFT_SIZE;++i){printf("%f\n", fftBuf.fft_buffer[i]);}
+        }
+}
 static int onAudioSync (const void* inputBuffer, void* outputBuffer,
                         unsigned long framesPerBuffer,
                         const PaStreamCallbackTimeInfo* timeInfo,
@@ -54,6 +137,7 @@ static int onAudioSync (const void* inputBuffer, void* outputBuffer,
     PaUtil_WriteRingBuffer(&buffer, in, framesPerBuffer);
     for (int i = 0; i < framesPerBuffer; ++i)
     {
+        update_fft_buffer(in[i]);
         // if (in[i] > 0.1) printf("%f\n", in[i]);
     }
 

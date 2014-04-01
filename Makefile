@@ -3,6 +3,7 @@ default: audio video combined test-combined
 audio: audio.c
 	@clang audio.c -o audio \
 		-lportaudio
+		-lfftw3 \
 
 video: video.c
 	@clang video.c -o video \
@@ -16,6 +17,7 @@ combined: combined.c pa_ringbuffer.c
 	@clang combined.c pa_ringbuffer.c -o combined \
 		-lportaudio \
 		-lglfw3 \
+		-lfftw3 \
 		-framework Cocoa \
 		-framework IOKit \
 		-framework OpenGL \
