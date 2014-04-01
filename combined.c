@@ -1,3 +1,6 @@
+#include "pa_ringbuffer.h"
+
+// #define GLFW_INCLUDE_GLCOREARB
 #include <GLFW/glfw3.h>
 #include <portaudio.h>
 
@@ -5,23 +8,17 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#define NUM_SECONDS   (2)
 #define SAMPLE_RATE   (44100)
+#define BUFFER_SIZE   (65536)
 #define FRAMES_PER_BUFFER  (64)
 
 #ifndef M_PI
 #define M_PI  (3.14159265)
 #endif
 
-#define TABLE_SIZE   (200)
-typedef struct
-{
-    float sine[TABLE_SIZE];
-    int left_phase;
-    int right_phase;
-    char message[20];
-}
-paTestData;
+float data[BUFFER_SIZE];
+float bufferData[BUFFER_SIZE];
+PaUtilRingBuffer buffer;
 
 static void glfwError (int error, const char* description)
 {
@@ -51,27 +48,22 @@ static int onAudioSync (const void* inputBuffer, void* outputBuffer,
                         PaStreamCallbackFlags statusFlags,
                         void* thunk)
 {
-    paTestData* data = (paTestData*)thunk;
     float* in = (float*)inputBuffer;
     float* out = (float*)outputBuffer;
 
+    PaUtil_WriteRingBuffer(&buffer, in, framesPerBuffer);
     for (int i = 0; i < framesPerBuffer; ++i)
     {
-        if (in[i] > 0.1 || in[i] < -0.1) printf("%2f\n", in[i]);
+        // if (in[i] > 0.1) printf("%f\n", in[i]);
     }
-    
+
     return paContinue;
 }
 
 int main (void)
 {
-    // Create sine wave
-    paTestData data;
-    for(int i = 0; i < TABLE_SIZE; ++i)
-    {
-        data.sine[i] = (float)sin(((double)i/(double)TABLE_SIZE) * M_PI * 2.);
-    }
-    data.left_phase = data.right_phase = 0;
+    // Initialize ring buffer
+    PaUtil_InitializeRingBuffer(&buffer, sizeof(float), BUFFER_SIZE, &bufferData);
 
     // Initialize PortAudio
     paCheckError(Pa_Initialize());
@@ -87,9 +79,10 @@ int main (void)
     // Configure stream output
     PaStreamParameters out;
     out.device = Pa_GetDefaultOutputDevice();
-    if (out.device == paNoDevice) {
-      fprintf(stderr, "Error: No default output device.\n");
-      exit(EXIT_FAILURE);
+    if (out.device == paNoDevice)
+    {
+        fprintf(stderr, "Error: No default output device.\n");
+        exit(EXIT_FAILURE);
     }
     out.channelCount = 2;
     out.sampleFormat = paFloat32;
@@ -102,11 +95,11 @@ int main (void)
                  &stream,
                  &in,
                  &out,
-                 SAMPLE_RATE,
+                 BUFFER_SIZE,
                  FRAMES_PER_BUFFER,
                  paClipOff,
                  onAudioSync,
-                 &data));
+                 NULL));
 
     // Initialize OpenGL window
     GLFWwindow* window;
@@ -140,24 +133,20 @@ int main (void)
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
         glOrtho(-aspectRatio, aspectRatio, -1.f, 1.f, 1.f, -1.f);
+
         glMatrixMode(GL_MODELVIEW);
-
         glLoadIdentity();
-        glRotatef((float) glfwGetTime() * 50.f, 0.f, 0.f, 1.f);
 
-        glBegin(GL_TRIANGLES);
-        glColor3f(1.f, 0.f, 0.f);
-        glVertex3f(-0.6f, -0.4f, 0.f);
-        glColor3f(0.f, 1.f, 0.f);
-        glVertex3f(0.6f, -0.4f, 0.f);
-        glColor3f(0.f, 0.f, 1.f);
-        glVertex3f(0.f, 0.6f, 0.f);
+        glBegin(GL_POINTS);
+        PaUtil_ReadRingBuffer(&buffer, &data, BUFFER_SIZE);
+        for (int i = 0; i < BUFFER_SIZE; ++i)
+        {
+            glVertex3f(1.5-3.f*i/BUFFER_SIZE, 10*data[i], 0.f);
+        }
         glEnd();
 
         glfwSwapBuffers(window);
         glfwPollEvents();
-
-        if (glfwGetTime() > NUM_SECONDS) glfwSetWindowShouldClose(window, GL_TRUE);
     }
 
     // Shut down GLFW

@@ -12,8 +12,8 @@ video: video.c
 		-framework OpenGL \
 		-framework CoreVideo
 
-combined: combined.c
-	@clang combined.c -o combined \
+combined: combined.c pa_ringbuffer.c
+	@clang combined.c pa_ringbuffer.c -o combined \
 		-lportaudio \
 		-lglfw3 \
 		-framework Cocoa \
