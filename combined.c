@@ -229,10 +229,10 @@ int main (void)
         PaUtil_ReadRingBuffer(&buffer, &data, BUFFER_SIZE);
         for (int i = 0; i < BUFFER_SIZE; ++i)
         {
-            glColor3f(0.0f,1.0f,0.7f);
-            glVertex3f(1.5-3.f*i/BUFFER_SIZE, 1*data[i], 0.f);
-            glColor3f(1.0f,0.0f,0.0f);
-            glVertex3f(1.5-3.f*i/(FFT_SIZE/2 + 1), 1*fft_result[i]-1, 0.f);
+            glColor3f(0.0f,0.5f,0.9f);
+            glVertex3f(3.f*i/BUFFER_SIZE-1.5f, 1*data[i], 0.f);
+            glColor3f(1.0f,0.0f,1.0f);
+            glVertex3f(3.f*i/(FFT_SIZE/2 + 1)-1.5f, 1*fft_result[i]-1, 0.f);
         }
         glEnd();
 
