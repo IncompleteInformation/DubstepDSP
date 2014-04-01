@@ -1,5 +1,5 @@
 ## Dependencies
-Install Homebrew from http://brew.sh/ if you haven't already. Then:
+Install [Homebrew](http://brew.sh) if you haven't already. Then:
 ```
 # Install CMake (to build GLFW)
 brew install cmake
