@@ -29,6 +29,7 @@ typedef struct
 }
 fftBuffer;
 fftBuffer fftBuf;
+double fft_result[FFT_SIZE/2 + 1];
 
 static void glfwError (int error, const char* description)
 {
@@ -95,13 +96,16 @@ static void perform_fft()
 
     fftw_execute ( plan_forward );
 
-    printf ( "\n" );
-    printf ( "  Output FFT Coefficients:\n" );
-    printf ( "\n" );
+    // printf ( "\n" );
+    // printf ( "  Output FFT Coefficients:\n" );
+    // printf ( "\n" );
 
     for ( i = 0; i < nout; i++ )
     {
-        printf ( "  %4d  %12f\n", i, abs_complex(out[i][0], out[i][1]) );
+        double fft_val = abs_complex(out[i][0], out[i][1]);
+        //printf ( "  %4d  %12f\n", i, fft_val );
+        fft_result[i] = fft_val;
+
     }
 
     /*
@@ -225,7 +229,10 @@ int main (void)
         PaUtil_ReadRingBuffer(&buffer, &data, BUFFER_SIZE);
         for (int i = 0; i < BUFFER_SIZE; ++i)
         {
-            glVertex3f(1.5-3.f*i/BUFFER_SIZE, 10*data[i], 0.f);
+            glColor3f(0.0f,1.0f,0.7f);
+            glVertex3f(1.5-3.f*i/BUFFER_SIZE, 1*data[i], 0.f);
+            glColor3f(1.0f,0.0f,0.0f);
+            glVertex3f(1.5-3.f*i/(FFT_SIZE/2 + 1), 1*fft_result[i]-1, 0.f);
         }
         glEnd();
 
