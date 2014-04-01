@@ -12,7 +12,8 @@
 #define SAMPLE_RATE   (44100)
 #define BUFFER_SIZE   (65536)
 #define FRAMES_PER_BUFFER  (64)
-#define FFT_SIZE (512) //512 = 11ms delay, 86Hz bins
+#define FFT_SIZE (1024) //512 = 11ms delay, 86Hz bins
+#define BIN_SIZE ((double) SAMPLE_RATE/FFT_SIZE)
 
 #ifndef M_PI
 #define M_PI  (3.14159265)
@@ -30,6 +31,8 @@ typedef struct
 fftBuffer;
 fftBuffer fftBuf;
 double fft_result[FFT_SIZE/2 + 1];
+double spectral_centroid;
+double dominant_frequency;
 
 static void glfwError (int error, const char* description)
 {
@@ -56,6 +59,33 @@ static double abs_complex(double real, double imag)
 {
     return sqrt(pow(real,2)+pow(imag,2));
 }
+static void calc_spectral_centroid()
+/* this calculates a linear-weighted spectral centroid */
+{
+    double top_sum = 0;
+    double bottom_sum = 0;
+    for (int i=0; i<FFT_SIZE/2 + 1; ++i)
+    {
+        /* spectral magnitude is already contained in fft_result */
+        bottom_sum+=fft_result[i];
+        top_sum+=fft_result[i]*(i+1)*BIN_SIZE; 
+    }
+    spectral_centroid = top_sum/bottom_sum;
+    //printf("%f\n", spectral_centroid);
+    return;
+}
+static void calc_dominant_frequency()
+/* this returns the Hz value of the max value bin */
+{
+    double max = 0;
+    int max_bin = 0;
+    for (int i=0; i<FFT_SIZE/2 + 1; ++i)
+    {
+        if (fft_result[i]>max){max_bin=(i+1); max = fft_result[i];}
+    }
+    dominant_frequency = max*max_bin*BIN_SIZE;
+    printf("%f\n", dominant_frequency);
+}
 static void perform_fft()
 {
     int i;
@@ -64,58 +94,23 @@ static void perform_fft()
     fftw_complex *out;
     fftw_plan plan_backward;
     fftw_plan plan_forward;
-
-/*
-  Set up an array to hold the data, and assign the data.
-*/
+    /* Set up an array to hold the data, and assign the data. */
     in = fftw_malloc ( sizeof ( double ) * FFT_SIZE );
-
-    for ( i = 0; i < FFT_SIZE; i++ )
-    {
-        in[i] = (double)fftBuf.fft_buffer[i];
-    }
-
-    // printf ( "\n" );
-    // printf ( "  Input Data:\n" );
-    // printf ( "\n" );
-
-    // for ( i = 0; i < FFT_SIZE; i++ )
-    // {
-    //     printf ( "  %4d  %12f\n", i, in[i] );
-    // }
-    /*
-    Set up an array to hold the transformed data,
-    get a "plan", and execute the plan to transform the IN data to
-    the OUT FFT coefficients.
-    */
+    for ( i = 0; i < FFT_SIZE; i++ ){in[i] = (double)fftBuf.fft_buffer[i];}
     nout = ( FFT_SIZE / 2 ) + 1;
-
     out = fftw_malloc ( sizeof ( fftw_complex ) * nout );
-
     plan_forward = fftw_plan_dft_r2c_1d ( FFT_SIZE, in, out, FFTW_ESTIMATE );
-
     fftw_execute ( plan_forward );
-
-    // printf ( "\n" );
-    // printf ( "  Output FFT Coefficients:\n" );
-    // printf ( "\n" );
-
     for ( i = 0; i < nout; i++ )
     {
         double fft_val = abs_complex(out[i][0], out[i][1]);
         //printf ( "  %4d  %12f\n", i, fft_val );
         fft_result[i] = fft_val;
-
     }
-
-    /*
-    Release the memory associated with the plans.
-    */
+    /* Release the memory associated with the plans. */
     fftw_destroy_plan ( plan_forward );
-
     fftw_free ( in );
     fftw_free ( out );
-
     return;
 }
 static void update_fft_buffer(float mic_bit)
@@ -126,6 +121,8 @@ static void update_fft_buffer(float mic_bit)
         {
             fftBuf.fft_buffer_loc=0;
             perform_fft();
+            calc_spectral_centroid();
+            calc_dominant_frequency();
             //for (int i=0;i<FFT_SIZE;++i){printf("%f\n", fftBuf.fft_buffer[i]);}
         }
 }
@@ -230,9 +227,9 @@ int main (void)
         for (int i = 0; i < BUFFER_SIZE; ++i)
         {
             glColor3f(0.0f,0.5f,0.9f);
-            glVertex3f(3.f*i/BUFFER_SIZE-1.5f, 1*data[i], 0.f);
+            glVertex3f(2*aspectRatio*i/BUFFER_SIZE-aspectRatio, 1*data[i], 0.f);
             glColor3f(1.0f,0.0f,1.0f);
-            glVertex3f(3.f*i/(FFT_SIZE/2 + 1)-1.5f, 1*fft_result[i]-1, 0.f);
+            glVertex3f(2*aspectRatio*i/(FFT_SIZE/2 + 1)-aspectRatio, 1*fft_result[i]-1, 0.f);
         }
         glEnd();
 
