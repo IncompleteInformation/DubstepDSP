@@ -78,12 +78,12 @@ static void calc_dominant_frequency()
 /* this returns the Hz value of the max value bin */
 {
     double max = 0;
-    int max_bin = 0;
+    int max_bin_index = 0;
     for (int i=0; i<FFT_SIZE/2 + 1; ++i)
     {
-        if (fft_result[i]>max){max_bin=(i+1); max = fft_result[i];}
+        if (fft_result[i]>max){max_bin_index=(i+1); max = fft_result[i];}
     }
-    dominant_frequency = max*max_bin*BIN_SIZE;
+    dominant_frequency = max_bin_index*BIN_SIZE;
     printf("%f\n", dominant_frequency);
 }
 static void perform_fft()
@@ -115,7 +115,7 @@ static void perform_fft()
 }
 static void update_fft_buffer(float mic_bit)
 {
-    fftBuf.fft_buffer[fftBuf.fft_buffer_loc] = mic_bit;
+    //fftBuf.fft_buffer[fftBuf.fft_buffer_loc] = mic_bit;
     ++fftBuf.fft_buffer_loc;
     if (fftBuf.fft_buffer_loc==FFT_SIZE)
         {
@@ -147,6 +147,10 @@ static int onAudioSync (const void* inputBuffer, void* outputBuffer,
 
 int main (void)
 {
+    for (int i = 0; i<FFT_SIZE; ++i)
+    {
+        fftBuf.fft_buffer[i] = sin(2*M_PI*i*((double) 20000/44100));
+    }
     // Initialize ring buffer
     PaUtil_InitializeRingBuffer(&buffer, sizeof(float), BUFFER_SIZE, &bufferData);
 
@@ -160,6 +164,7 @@ int main (void)
     in.sampleFormat = paFloat32;
     in.suggestedLatency = Pa_GetDeviceInfo(in.device)->defaultLowInputLatency;
     in.hostApiSpecificStreamInfo = NULL;
+
 
     // Configure stream output
     PaStreamParameters out;
@@ -227,9 +232,9 @@ int main (void)
         for (int i = 0; i < BUFFER_SIZE; ++i)
         {
             glColor3f(0.0f,0.5f,0.9f);
-            glVertex3f(2*aspectRatio*i/BUFFER_SIZE-aspectRatio, 1*data[i], 0.f);
+            glVertex3f(2*aspectRatio*i/BUFFER_SIZE-aspectRatio, data[i], 0.f);
             glColor3f(1.0f,0.0f,1.0f);
-            glVertex3f(2*aspectRatio*i/(FFT_SIZE/2 + 1)-aspectRatio, 1*fft_result[i]-1, 0.f);
+            glVertex3f(2*aspectRatio*i/(FFT_SIZE/2 + 1)-aspectRatio, fft_result[i]-1, 0.f);
         }
         glEnd();
 
