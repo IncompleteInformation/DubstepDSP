@@ -1,13 +1,13 @@
 #include "pa_ringbuffer.h"
 
 // #define GLFW_INCLUDE_GLCOREARB
+#include <stdlib.h>
+#include <stdio.h>
+#include <math.h> //math comes before fftw so that fftw_complex is not overriden
+
 #include <GLFW/glfw3.h>
 #include <portaudio.h>
 #include <fftw3.h>
-
-#include <math.h>
-#include <stdlib.h>
-#include <stdio.h>
 
 #define SAMPLE_RATE   (44100)
 #define BUFFER_SIZE   (65536)
@@ -31,6 +31,7 @@ typedef struct
 fftBuffer;
 fftBuffer fftBuf;
 double fft_result[FFT_SIZE/2 + 1];
+fftw_complex fft_complex_unshifted[FFT_SIZE/2 + 1];
 double spectral_centroid;
 double dominant_frequency;
 
@@ -85,8 +86,32 @@ static void calc_dominant_frequency()
     {
         if (fft_result[i]>max){max_bin_index=(i+1); max = fft_result[i];}
     }
-    dominant_frequency = max_bin_index*BIN_SIZE;
+    double est;
+    fftw_complex peak;
+    peak[0] = fft_complex_unshifted[max_bin_index][0];
+    peak[1] = fft_complex_unshifted[max_bin_index][1];
+    fftw_complex delta;
+    fftw_complex left;
+    fftw_complex right;
+    double peakfrac;
+
+    if (max_bin_index==1) dominant_frequency = BIN_SIZE;
+    else if (max_bin_index==FFT_SIZE) dominant_frequency = 22000; //like we care...
+    else 
+    {
+        left[0] = fft_complex_unshifted[max_bin_index-1][0];
+        left[1] = fft_complex_unshifted[max_bin_index-1][1];
+        right[0] = fft_complex_unshifted[max_bin_index+1][0];
+        right[0] = fft_complex_unshifted[max_bin_index+1][0];
+        delta[0] = (right[0] - left[0]) / ((2 * peak[0] - left[0]) - right[0]);
+        //delta[1] = (right[1] - left[1]) / ((2 * peak[1] - left[1]) - right[1]); //we only care about real part. magic. ref - jon's octave code
+        peakfrac = max_bin_index - delta[0];
+        est = peakfrac * BIN_SIZE;
+        //dominant_frequency = max_bin_index*BIN_SIZE;
+        dominant_frequency = est;
+    }
     printf("%f\n", dominant_frequency);
+    return;
 }
 static void perform_fft()
 {
@@ -108,6 +133,8 @@ static void perform_fft()
         double fft_val = abs_complex(out[i][0], out[i][1]);
         //printf ( "  %4d  %12f\n", i, fft_val );
         fft_result[i] = fft_val;
+        fft_complex_unshifted[i][0] = out[i][0];
+        fft_complex_unshifted[i][1] = out[i][1];
     }
     /* Release the memory associated with the plans. */
     fftw_destroy_plan ( plan_forward );
