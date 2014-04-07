@@ -57,7 +57,9 @@ static void onKeyPress (GLFWwindow* window, int key, int scancode, int action, i
 }
 static double abs_complex(double real, double imag)
 {
-    return sqrt(pow(real,2)+pow(imag,2));
+    double power = pow(real,2)+pow(imag,2);
+    //double normalized = 10./log(10.) * log(power + 1e-6);
+    return power/FFT_SIZE; //this scaling needs fixing. some log shit, but we need to know how fftw scales on transform
 }
 static void calc_spectral_centroid()
 /* this calculates a linear-weighted spectral centroid */
@@ -115,7 +117,7 @@ static void perform_fft()
 }
 static void update_fft_buffer(float mic_bit)
 {
-    //fftBuf.fft_buffer[fftBuf.fft_buffer_loc] = mic_bit;
+    fftBuf.fft_buffer[fftBuf.fft_buffer_loc] = mic_bit;
     ++fftBuf.fft_buffer_loc;
     if (fftBuf.fft_buffer_loc==FFT_SIZE)
         {
@@ -138,6 +140,8 @@ static int onAudioSync (const void* inputBuffer, void* outputBuffer,
     PaUtil_WriteRingBuffer(&buffer, in, framesPerBuffer);
     for (int i = 0; i < framesPerBuffer; ++i)
     {
+        if (in[i] > 1){update_fft_buffer(1);printf("%s\n", "clipping high");continue;}
+        if (in[i] < -1){update_fft_buffer(-1);printf("%s\n", "clipping low");continue;}
         update_fft_buffer(in[i]);
         // if (in[i] > 0.1) printf("%f\n", in[i]);
     }
@@ -147,6 +151,7 @@ static int onAudioSync (const void* inputBuffer, void* outputBuffer,
 
 int main (void)
 {
+    /* for loop tests expected behaviour. need to disable write in update_fft_buffer */
     for (int i = 0; i<FFT_SIZE; ++i)
     {
         fftBuf.fft_buffer[i] = sin(2*M_PI*i*((double) 20000/44100));
@@ -185,7 +190,7 @@ int main (void)
                  &stream,
                  &in,
                  &out,
-                 BUFFER_SIZE,
+                 SAMPLE_RATE,
                  FRAMES_PER_BUFFER,
                  paClipOff,
                  onAudioSync,
