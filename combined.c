@@ -60,7 +60,7 @@ static double abs_complex(double real, double imag)
 {
     double power = pow(real,2)+pow(imag,2);
     //double normalized = 10./log(10.) * log(power + 1e-6);
-    return power/FFT_SIZE; //this scaling needs fixing. some log shit, but we need to know how fftw scales on transform
+    return power/50; //this scaling needs fixing. some log shit, but we need to know how fftw scales on transform
 }
 static void calc_spectral_centroid()
 /* this calculates a linear-weighted spectral centroid */
