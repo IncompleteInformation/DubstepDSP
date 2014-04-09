@@ -1,12 +1,24 @@
 #include "pitch.h"
+#include "tinydir.h"
 
 #include <fftw3.h>
 #include <sndfile.h>
 
+#include <math.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <math.h>
+#include <unistd.h>
+
+// Return true iff str ends with suffix
+bool ends_with (char* str, char* suffix)
+{
+    if (!str || !suffix) return false;
+    size_t strl = strlen(str);
+    size_t sufl = strlen(suffix);
+    if (sufl > strl) return false;
+    return strncmp(str + strl - sufl, suffix, sufl) == 0;
+}
 
 // Test pitch detection algorithms on a sample
 // Note: Caller relinquishes ownership of sample.
@@ -72,6 +84,44 @@ bool file_test (char* file, double sample_freq)
     return true;
 }
 
+bool dir_test (char* path)
+{
+    tinydir_dir dir;
+    tinydir_open(&dir, path);
+
+    while (dir.has_next)
+    {
+        tinydir_file file;
+        tinydir_readfile(&dir, &file);
+        if (file.name[0] != '.')
+        {
+            char file_path[1024];
+            strcpy(file_path, path);
+            strcat(file_path, "/");
+            strcat(file_path, file.name);
+
+            if (file.is_dir)
+            {
+                if (!dir_test(file_path)) goto fail;
+            }
+            else
+            {
+                double freq = atoi(file.name);
+                if (freq > 0 && !file_test(file_path, freq)) goto fail;
+            }
+        }
+
+        tinydir_next(&dir);
+    }
+
+    tinydir_close(&dir);
+    return true;
+
+fail:
+    tinydir_close(&dir);
+    return false;
+}
+
 int main (void)
 {
     for (int f = 80; f < 1200; f += 1)
@@ -79,6 +129,8 @@ int main (void)
         if (!sine_test(1024, 44100, f)) return 1;
     }
 
-    file_test("pitch_tests/200.wav", 200);
-    file_test("pitch_tests/440.wav", 440);
+    char path[1024];
+    getcwd(path, 1024);
+    strcat(path, "/pitch_tests");
+    dir_test(path);
 }
