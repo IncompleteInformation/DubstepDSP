@@ -36,7 +36,7 @@ bool test (char* test, double* sample, size_t sample_size, double sample_rate, d
     double dom = dominant_freq(fft, fft_mag, sample_size, sample_rate);
     double dom_err = dom - sample_freq;
 
-    if (fabs(dom_err)/sample_freq > .0125)
+    if (fabs(dom_err)/sample_freq > .02)
     {
         fprintf(stderr, "FAILED: %s\n", test);
         fprintf(stderr, "    Sample size: %ld\n", sample_size);
