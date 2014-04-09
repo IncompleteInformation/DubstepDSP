@@ -84,6 +84,7 @@ bool file_test (char* file, double sample_freq)
     return true;
 }
 
+// Test every WAV file found in the directory at path
 bool dir_test (char* path)
 {
     tinydir_dir dir;
@@ -122,6 +123,7 @@ fail:
     return false;
 }
 
+// Run all tests
 int main (void)
 {
     for (int f = 80; f < 1200; f += 1)
