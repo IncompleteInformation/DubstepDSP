@@ -7,11 +7,15 @@
 //   sample_size: the length of the sample array
 void calc_fft (double* sample, fftw_complex* fft, double* tmp, size_t sample_size);
 
-// Calculate the magnitude of each bin of fft, storing the result in fft_mag
+// Compute the magnitude of each bin of fft, storing the result in fft_mag
 //   fft:         input array of length sample_size/2+1
 //   fft_mag:     output array of length sample_size/2+1
 //   sample_size: the length of the original sample the fft was based on
 void calc_fft_mag (fftw_complex* fft, double* fft_mag, size_t sample_size);
 
-// TODO: Document me!
-double dominant (fftw_complex* fft, size_t fft_size);
+// Return the dominant frequency in fft
+//   fft:         input array of length sample_size/2+1
+//   fft_mag:     output array of length sample_size/2+1
+//   sample_size: the length of the original sample the fft was based on
+//   sample_rate: the sampling rate (in Hz) of the original sample
+double dominant_freq (fftw_complex* fft, double* fft_mag, size_t sample_size, double sample_rate);
