@@ -159,7 +159,7 @@ static int onAudioSync (const void* inputBuffer, void* outputBuffer,
                         unsigned long framesPerBuffer,
                         const PaStreamCallbackTimeInfo* timeInfo,
                         PaStreamCallbackFlags statusFlags,
-                        void* thunk)
+                        void* userData)
 {
     float* in = (float*)inputBuffer;
     float* out = (float*)outputBuffer;
@@ -265,6 +265,13 @@ int main (void)
         {
             glColor3f(0.0f,0.5f,0.9f);
             glVertex3f(2*aspectRatio*i/BUFFER_SIZE-aspectRatio, data[i], 0.f);
+        }
+        glEnd();
+
+        glBegin(GL_LINES);
+        PaUtil_ReadRingBuffer(&buffer, &data, BUFFER_SIZE);
+        for (int i = 0; i < BUFFER_SIZE; ++i)
+        {
             glColor3f(1.0f,0.0f,1.0f);
             glVertex3f(2*aspectRatio*i/(FFT_SIZE/2 + 1)-aspectRatio, fft_result[i]-1, 0.f);
         }
