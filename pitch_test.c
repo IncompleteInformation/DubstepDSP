@@ -29,7 +29,7 @@ bool sine_test (double sample_rate, size_t sample_size, double sample_freq)
 
     if (fabs(dom_err)/sample_freq > .0125)
     {
-        printf("FAILED SINE TEST:\n");
+        printf("Sine test failed:\n");
         printf("    Sample size: %ld\n", sample_size);
         printf("    Sample rate: %.0f\n", sample_rate);
         printf("    Frequency:   %.0f\n", sample_freq);
@@ -50,5 +50,7 @@ bool sine_test (double sample_rate, size_t sample_size, double sample_freq)
 int main (void)
 {
     for (int f = 80; f < 1200; f += 1)
+    {
         if (!sine_test(44100, 1024, f)) break;
+    }
 }
