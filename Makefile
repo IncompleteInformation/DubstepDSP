@@ -1,12 +1,19 @@
-default: audio video combined test-combined
+default: test-combined
+
+pitch: pitch.c pitch.h pitch_test.c
+	@cc pitch_test.c pitch.c -o pitch_test \
+		-lfftw3
+
+pitch_test: pitch
+	@./pitch_test
 
 audio: audio.c
-	@clang audio.c -o audio \
+	@cc audio.c -o audio \
 		-lportaudio
 		-lfftw3 \
 
 video: video.c
-	@clang video.c -o video \
+	@cc video.c -o video \
 		-lglfw3 \
 		-framework Cocoa \
 		-framework IOKit \
@@ -14,7 +21,7 @@ video: video.c
 		-framework CoreVideo
 
 combined: combined.c pa_ringbuffer.c
-	@clang combined.c pa_ringbuffer.c -o combined \
+	@cc combined.c pa_ringbuffer.c -o combined \
 		-lportaudio \
 		-lglfw3 \
 		-lfftw3 \
