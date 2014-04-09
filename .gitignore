@@ -2,5 +2,7 @@ audio
 combined
 pitch_test
 video
-
 glfw*
+xcuserdata
+*.xcworkspacedata
+*.xccheckout

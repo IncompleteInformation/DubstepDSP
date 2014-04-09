@@ -21,8 +21,8 @@ video: video.c
 		-framework OpenGL \
 		-framework CoreVideo
 
-combined: combined.c pa_ringbuffer.c
-	@cc combined.c pa_ringbuffer.c -o combined \
+combined: combined.c pa_ringbuffer.c pitch.c
+	@cc combined.c pa_ringbuffer.c pitch.c -o combined \
 		-lportaudio \
 		-lglfw3 \
 		-lfftw3 \

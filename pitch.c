@@ -22,7 +22,7 @@ double dominant_freq (fftw_complex* fft, double* fft_mag, size_t sample_size, do
 {
     double max = 0;
     int max_bin = 0;
-    for (size_t i = 0; i < sample_size/2 + 1; ++i)
+    for (size_t i = 0; i < sample_size/2+1; ++i)
     {
         if (fft_mag[i] > max)
         {
@@ -31,11 +31,9 @@ double dominant_freq (fftw_complex* fft, double* fft_mag, size_t sample_size, do
         }
     }
 
-    double peak, delta, left, right;
-
-    peak  = fft[max_bin][0];
-    left  = fft[max_bin-1][0];
-    right = fft[max_bin+1][0];
-    delta = (right - left) / (2 * peak - left - right);
-    return sample_rate / sample_size * (max_bin - delta);
+    double peak  = fft[max_bin][0];
+    double left  = fft[max_bin-1][0];
+    double right = fft[max_bin+1][0];
+    double delta = (right - left) / (2 * peak - left - right);
+    dom_freq = sample_rate / sample_size * (max_bin - delta);
 }

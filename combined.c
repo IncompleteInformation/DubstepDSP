@@ -1,4 +1,5 @@
 #include "pa_ringbuffer.h"
+#include "pitch.h"
 
 // #define GLFW_INCLUDE_GLCOREARB
 #include <stdlib.h>
@@ -9,7 +10,7 @@
 #include <portaudio.h>
 #include <fftw3.h>
 
-#define SAMPLE_RATE   (44100)
+#define SAMPLE_RATE   (double)(44100)
 #define BUFFER_SIZE   (65536)
 #define FRAMES_PER_BUFFER  (64)
 #define FFT_SIZE (1024) //512 = 11ms delay, 86Hz bins
@@ -19,21 +20,19 @@
 #define M_PI  (3.14159265)
 #endif
 
-float data[BUFFER_SIZE];
-float bufferData[BUFFER_SIZE];
-PaUtilRingBuffer buffer;
+typedef struct{
+    float data[BUFFER_SIZE];
+    float bufferData[BUFFER_SIZE];
+    PaUtilRingBuffer buffer;
 
-typedef struct
-{
-    float fft_buffer[FFT_SIZE];
+    double fft_buffer[FFT_SIZE];
     int fft_buffer_loc;
-}
-fftBuffer;
-fftBuffer fftBuf;
-double fft_result[FFT_SIZE/2 + 1];
-fftw_complex fft_complex_unshifted[FFT_SIZE/2 + 1];
-double spectral_centroid;
-double dominant_frequency;
+    fftw_complex fft[FFT_SIZE/2 + 1];
+    double fft_mag[FFT_SIZE/2 + 1];
+
+    double spectral_centroid;
+    double dominant_frequency;
+} UserData;
 
 static void glfwError (int error, const char* description)
 {
@@ -56,103 +55,46 @@ static void onKeyPress (GLFWwindow* window, int key, int scancode, int action, i
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
         glfwSetWindowShouldClose(window, GL_TRUE);
 }
-static double abs_complex(double real, double imag)
-{
-    double power = pow(real,2)+pow(imag,2);
-    //double normalized = 10./log(10.) * log(power + 1e-6);
-    return power/50; //this scaling needs fixing. some log shit, but we need to know how fftw scales on transform
-}
-static void calc_spectral_centroid()
-/* this calculates a linear-weighted spectral centroid */
-{
-    double top_sum = 0;
-    double bottom_sum = 0;
-    for (int i=0; i<FFT_SIZE/2 + 1; ++i)
-    {
-        /* spectral magnitude is already contained in fft_result */
-        bottom_sum+=fft_result[i];
-        top_sum+=fft_result[i]*(i+1)*BIN_SIZE; 
-    }
-    spectral_centroid = top_sum/bottom_sum;
-    //printf("%f\n", spectral_centroid);
-    return;
-}
-static void calc_dominant_frequency()
-/* this returns the Hz value of the max value bin */
-{
-    double max = 0;
-    int max_bin_index = 0;
-    for (int i=0; i<FFT_SIZE/2 + 1; ++i)
-    {
-        if (fft_result[i]>max){max_bin_index=(i+1); max = fft_result[i];}
-    }
-    double est;
-    fftw_complex peak;
-    peak[0] = fft_complex_unshifted[max_bin_index][0];
-    peak[1] = fft_complex_unshifted[max_bin_index][1];
-    fftw_complex delta;
-    fftw_complex left;
-    fftw_complex right;
-    double peakfrac;
 
-    if (max_bin_index==1) dominant_frequency = BIN_SIZE;
-    else if (max_bin_index==FFT_SIZE) dominant_frequency = 22000; //like we care...
-    else 
-    {
-        left[0] = fft_complex_unshifted[max_bin_index-1][0];
-        left[1] = fft_complex_unshifted[max_bin_index-1][1];
-        right[0] = fft_complex_unshifted[max_bin_index+1][0];
-        right[0] = fft_complex_unshifted[max_bin_index+1][0];
-        delta[0] = (right[0] - left[0]) / ((2 * peak[0] - left[0]) - right[0]);
-        //delta[1] = (right[1] - left[1]) / ((2 * peak[1] - left[1]) - right[1]); //we only care about real part. magic. ref - jon's octave code
-        peakfrac = max_bin_index - delta[0];
-        est = peakfrac * BIN_SIZE;
-        //dominant_frequency = max_bin_index*BIN_SIZE;
-        dominant_frequency = est;
-    }
-    printf("%f\n", dominant_frequency);
-    return;
-}
-static void perform_fft()
+// static void calc_spectral_centroid()
+// /* this calculates a linear-weighted spectral centroid */
+// {
+//     double top_sum = 0;
+//     double bottom_sum = 0;
+//     for (int i=0; i<FFT_SIZE/2 + 1; ++i)
+//     {
+//         // spectral magnitude is already contained in fft_result 
+//         bottom_sum+=fft_result[i];
+//         top_sum+=fft_result[i]*(i+1)*BIN_SIZE; 
+//     }
+//     spectral_centroid = top_sum/bottom_sum;
+//     //printf("%f\n", spectral_centroid);
+//     return;
+//}
+// typedef struct{
+//     float data[BUFFER_SIZE];
+//     float bufferData[BUFFER_SIZE];
+//     PaUtilRingBuffer buffer;
+//     float fft_buffer[FFT_SIZE];
+//     int fft_buffer_loc;
+
+//     double fft_mag[FFT_SIZE/2 + 1];
+//     fftw_complex fft[FFT_SIZE/2 + 1];
+//     double spectral_centroid;
+//     double dominant_frequency;
+// } userData;
+static void update_fft_buffer(float mic_bit, UserData* ud)
 {
-    int i;
-    double *in;
-    int nout;
-    fftw_complex *out;
-    fftw_plan plan_backward;
-    fftw_plan plan_forward;
-    /* Set up an array to hold the data, and assign the data. */
-    in = fftw_malloc ( sizeof ( double ) * FFT_SIZE );
-    for ( i = 0; i < FFT_SIZE; i++ ){in[i] = (double)fftBuf.fft_buffer[i];}
-    nout = ( FFT_SIZE / 2 ) + 1;
-    out = fftw_malloc ( sizeof ( fftw_complex ) * nout );
-    plan_forward = fftw_plan_dft_r2c_1d ( FFT_SIZE, in, out, FFTW_ESTIMATE );
-    fftw_execute ( plan_forward );
-    for ( i = 0; i < nout; i++ )
-    {
-        double fft_val = abs_complex(out[i][0], out[i][1]);
-        //printf ( "  %4d  %12f\n", i, fft_val );
-        fft_result[i] = fft_val;
-        fft_complex_unshifted[i][0] = out[i][0];
-        fft_complex_unshifted[i][1] = out[i][1];
-    }
-    /* Release the memory associated with the plans. */
-    fftw_destroy_plan ( plan_forward );
-    fftw_free ( in );
-    fftw_free ( out );
-    return;
-}
-static void update_fft_buffer(float mic_bit)
-{
-    fftBuf.fft_buffer[fftBuf.fft_buffer_loc] = mic_bit;
-    ++fftBuf.fft_buffer_loc;
-    if (fftBuf.fft_buffer_loc==FFT_SIZE)
+    ud->fft_buffer[ud->fft_buffer_loc] = mic_bit;
+    ++ud->fft_buffer_loc;
+    if (ud->fft_buffer_loc==FFT_SIZE)
         {
-            fftBuf.fft_buffer_loc=0;
-            perform_fft();
-            calc_spectral_centroid();
-            calc_dominant_frequency();
-            //for (int i=0;i<FFT_SIZE;++i){printf("%f\n", fftBuf.fft_buffer[i]);}
+            ud->fft_buffer_loc=0;
+            double tmp[FFT_SIZE];
+            calc_fft(ud->fft_buffer, ud->fft, tmp, FFT_SIZE);
+            calc_fft_mag(ud->fft, ud->fft_mag, FFT_SIZE);
+            ud->dominant_frequency = dominant_freq(ud->fft, ud->fft_mag, FFT_SIZE, SAMPLE_RATE);
+            // calc_spectral_centroid();
         }
 }
 static int onAudioSync (const void* inputBuffer, void* outputBuffer,
@@ -161,15 +103,16 @@ static int onAudioSync (const void* inputBuffer, void* outputBuffer,
                         PaStreamCallbackFlags statusFlags,
                         void* userData)
 {
+    UserData* ud = (UserData*) userData;
     float* in = (float*)inputBuffer;
     float* out = (float*)outputBuffer;
 
-    PaUtil_WriteRingBuffer(&buffer, in, framesPerBuffer);
+    PaUtil_WriteRingBuffer(&ud->buffer, in, framesPerBuffer);
     for (int i = 0; i < framesPerBuffer; ++i)
     {
-        if (in[i] > 1){update_fft_buffer(1);printf("%s\n", "clipping high");continue;}
-        if (in[i] < -1){update_fft_buffer(-1);printf("%s\n", "clipping low");continue;}
-        update_fft_buffer(in[i]);
+        if (in[i] > 1){update_fft_buffer(1, ud);printf("%s\n", "clipping high");continue;}
+        if (in[i] < -1){update_fft_buffer(-1, ud);printf("%s\n", "clipping low");continue;}
+        update_fft_buffer(in[i], ud);
         // if (in[i] > 0.1) printf("%f\n", in[i]);
     }
 
@@ -178,13 +121,11 @@ static int onAudioSync (const void* inputBuffer, void* outputBuffer,
 
 int main (void)
 {
-    /* for loop tests expected behaviour. need to disable write in update_fft_buffer */
-    for (int i = 0; i<FFT_SIZE; ++i)
-    {
-        fftBuf.fft_buffer[i] = sin(2*M_PI*i*((double) 20000/44100));
-    }
+    UserData ud;
+
+
     // Initialize ring buffer
-    PaUtil_InitializeRingBuffer(&buffer, sizeof(float), BUFFER_SIZE, &bufferData);
+    PaUtil_InitializeRingBuffer(&ud.buffer, sizeof(float), BUFFER_SIZE, &ud.bufferData);
 
     // Initialize PortAudio
     paCheckError(Pa_Initialize());
@@ -221,9 +162,11 @@ int main (void)
                  FRAMES_PER_BUFFER,
                  paClipOff,
                  onAudioSync,
-                 NULL));
+                 &ud));
 
     // Initialize OpenGL window
+    double dbRange = 96;
+
     GLFWwindow* window;
     glfwSetErrorCallback(glfwError);
     if (!glfwInit()) exit(EXIT_FAILURE);
@@ -260,20 +203,34 @@ int main (void)
         glLoadIdentity();
 
         glBegin(GL_POINTS);
-        PaUtil_ReadRingBuffer(&buffer, &data, BUFFER_SIZE);
+        PaUtil_ReadRingBuffer(&ud.buffer, &ud.data, BUFFER_SIZE);
         for (int i = 0; i < BUFFER_SIZE; ++i)
         {
             glColor3f(0.0f,0.5f,0.9f);
-            glVertex3f(2*aspectRatio*i/BUFFER_SIZE-aspectRatio, data[i], 0.f);
+            glVertex3f(2*aspectRatio*i/BUFFER_SIZE-aspectRatio, ud.data[i], 0.f);
         }
         glEnd();
 
-        glBegin(GL_LINES);
-        PaUtil_ReadRingBuffer(&buffer, &data, BUFFER_SIZE);
+        glBegin(GL_LINE_STRIP);
+        PaUtil_ReadRingBuffer(&ud.buffer, &ud.data, BUFFER_SIZE);
         for (int i = 0; i < BUFFER_SIZE; ++i)
         {
             glColor3f(1.0f,0.0f,1.0f);
-            glVertex3f(2*aspectRatio*i/(FFT_SIZE/2 + 1)-aspectRatio, fft_result[i]-1, 0.f);
+            double logI = log10(i)*(FFT_SIZE/2+1)/log10(FFT_SIZE/2+1);
+            glVertex3f(2*aspectRatio*logI/(FFT_SIZE/2 + 1)-aspectRatio, 2*(dbRange+ud.fft_mag[i])/dbRange-1, 0.f);
+        }
+        glEnd();
+        glBegin(GL_LINES);
+        int j = 0;
+        int k = 1;
+        while(j<(FFT_SIZE/2+1))
+        {
+            glColor3f(0.5f,0.5f,0.5f);
+            double logJ = log10(j)*(FFT_SIZE/2+1)/log10(FFT_SIZE/2+1);
+            glVertex3f(2*aspectRatio*logJ/(FFT_SIZE/2 + 1)-aspectRatio, -1, 0.f);
+            glVertex3f(2*aspectRatio*logJ/(FFT_SIZE/2 + 1)-aspectRatio, 1, 0.f);
+            j+=k;
+            if (j==k*10) k*=10;
         }
         glEnd();
 
@@ -284,7 +241,7 @@ int main (void)
     // Shut down GLFW
     glfwDestroyWindow(window);
     glfwTerminate();
-
+    
     // Shut down PortAudio
     paCheckError(Pa_StopStream(stream));
     paCheckError(Pa_CloseStream(stream));
