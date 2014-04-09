@@ -35,5 +35,5 @@ double dominant_freq (fftw_complex* fft, double* fft_mag, size_t sample_size, do
     double left  = fft[max_bin-1][0];
     double right = fft[max_bin+1][0];
     double delta = (right - left) / (2 * peak - left - right);
-    dom_freq = sample_rate / sample_size * (max_bin - delta);
+    return sample_rate / sample_size * (max_bin - delta);
 }
