@@ -35,10 +35,11 @@ double dominant (fftw_complex* fft, size_t fft_size)
 // Test pitch detection algorithms against a sine wave
 void sine_test (size_t sample_rate, size_t sample_size, double sample_freq)
 {
+    // Set up
     printf("sine_test(%ld,%ld,%f)\n", sample_rate, sample_size, sample_freq);
     double* sample = malloc(sizeof(double)*sample_size);
-    double* fft_tmp = malloc(sizeof(double)*sample_size);
     fftw_complex* fft = malloc(sizeof(fftw_complex)*(sample_size/2+1));
+    double* fft_tmp = malloc(sizeof(double)*sample_size);
     double* fft_mag = malloc(sizeof(double)*(sample_size/2+1));
 
     // Generate sine wave
@@ -50,7 +51,11 @@ void sine_test (size_t sample_rate, size_t sample_size, double sample_freq)
     calc_fft_mag(fft, fft_mag, sample_size);
     printf("    dominant: %f\n", dominant(fft, sample_size));
 
+    // Clean up
     free(sample);
+    free(fft);
+    free(fft_tmp);
+    free(fft_mag);
     printf("\n");
 }
 
