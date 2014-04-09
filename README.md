@@ -15,12 +15,16 @@ cmake .
 make
 make install # MAY NEED SUDO
 
+# Install libsndfile
+brew install libsndfile
+
 # Install PortAudio
 brew install portaudio
 ```
 
 - **FFTW:** http://www.fftw.org
 - **GLFW:** http://www.glfw.org
+- **libsndfile:** http://www.mega-nerd.com/libsndfile/
 - **PortAudio:** http://www.portaudio.com
 
 ## Building

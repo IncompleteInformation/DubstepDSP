@@ -2,7 +2,8 @@ default: test-combined
 
 pitch: pitch.c pitch.h pitch_test.c
 	@cc pitch_test.c pitch.c -o pitch_test \
-		-lfftw3
+		-lfftw3 \
+		-lsndfile
 
 pitch_test: pitch
 	@./pitch_test
