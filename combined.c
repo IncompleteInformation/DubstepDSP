@@ -105,7 +105,7 @@ static int onAudioSync (const void* inputBuffer, void* outputBuffer,
 {
     UserData* ud = (UserData*) userData;
     float* in = (float*)inputBuffer;
-    float* out = (float*)outputBuffer;
+    //float* out = (float*)outputBuffer;
 
     PaUtil_WriteRingBuffer(&ud->buffer, in, framesPerBuffer);
     for (int i = 0; i < framesPerBuffer; ++i)
@@ -122,7 +122,7 @@ static int onAudioSync (const void* inputBuffer, void* outputBuffer,
 int main (void)
 {
     UserData ud;
-
+    ud.fft_buffer_loc = 0;
 
     // Initialize ring buffer
     PaUtil_InitializeRingBuffer(&ud.buffer, sizeof(float), BUFFER_SIZE, &ud.bufferData);
@@ -213,25 +213,27 @@ int main (void)
 
         glBegin(GL_LINE_STRIP);
         PaUtil_ReadRingBuffer(&ud.buffer, &ud.data, BUFFER_SIZE);
-        for (int i = 0; i < BUFFER_SIZE; ++i)
+        for (int i = 0; i < FFT_SIZE/2+1; ++i)
         {
             glColor3f(1.0f,0.0f,1.0f);
             double logI = log10(i)*(FFT_SIZE/2+1)/log10(FFT_SIZE/2+1);
-            glVertex3f(2*aspectRatio*logI/(FFT_SIZE/2 + 1)-aspectRatio, 2*(dbRange+ud.fft_mag[i])/dbRange-1, 0.f);
+            double scaledMag = 10*log10(ud.fft_mag[i]/FFT_SIZE);
+            scaledMag = (dbRange+scaledMag)/dbRange;
+            glVertex3f(2*aspectRatio*logI/(FFT_SIZE/2 + 1)-aspectRatio, 2*scaledMag-1, 0.f);
         }
         glEnd();
         glBegin(GL_LINES);
-        int j = 0;
-        int k = 1;
-        while(j<(FFT_SIZE/2+1))
-        {
-            glColor3f(0.5f,0.5f,0.5f);
-            double logJ = log10(j)*(FFT_SIZE/2+1)/log10(FFT_SIZE/2+1);
-            glVertex3f(2*aspectRatio*logJ/(FFT_SIZE/2 + 1)-aspectRatio, -1, 0.f);
-            glVertex3f(2*aspectRatio*logJ/(FFT_SIZE/2 + 1)-aspectRatio, 1, 0.f);
-            j+=k;
-            if (j==k*10) k*=10;
-        }
+//        int j = 0;
+//        int k = 1;
+//        while(j<(FFT_SIZE/2+1))
+//        {
+//            glColor3f(0.5f,0.5f,0.5f);
+//            double logJ = log10(j)*(FFT_SIZE/2+1)/log10(FFT_SIZE/2+1);
+//            glVertex3f(2*aspectRatio*logJ/(FFT_SIZE/2 + 1)-aspectRatio, -1, 0.f);
+//            glVertex3f(2*aspectRatio*logJ/(FFT_SIZE/2 + 1)-aspectRatio, 1, 0.f);
+//            j+=k;
+//            if (j==k*10) k*=10;
+//        }
         glEnd();
 
         glfwSwapBuffers(window);
