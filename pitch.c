@@ -35,5 +35,20 @@ double dominant_freq (fftw_complex* fft, double* fft_mag, size_t sample_size, do
     double left  = fft[max_bin-1][0];
     double right = fft[max_bin+1][0];
     double delta = (right - left) / (2 * peak - left - right);
+    printf("%f\n", sample_rate / sample_size * (max_bin - delta));
     return sample_rate / sample_size * (max_bin - delta);
+}
+
+double calc_spectral_centroid(double* fft_mag, size_t sample_size, double sample_rate)
+{
+    double top_sum = 0;
+    double bottom_sum = 0;
+    for (int i=0; i<sample_size/2 + 1; ++i)
+    {
+        // spectral magnitude is already contained in fft_result
+        bottom_sum+=fft_mag[i];
+        top_sum+=fft_mag[i]*(i+1)*(sample_rate/sample_size);
+    }
+    double spectral_centroid = top_sum/bottom_sum;
+    return spectral_centroid;
 }

@@ -19,3 +19,9 @@ void calc_fft_mag (fftw_complex* fft, double* fft_mag, size_t sample_size);
 //   sample_size: the length of the original sample the fft was based on
 //   sample_rate: the sampling rate (in Hz) of the original sample
 double dominant_freq (fftw_complex* fft, double* fft_mag, size_t sample_size, double sample_rate);
+
+// Return the dominant frequency in fft
+//   fft_mag:     output array of length sample_size/2+1
+//   sample_size: the length of the original sample the fft was based on
+//   sample_rate: the sampling rate (in Hz) of the original sample
+double calc_spectral_centroid(double* fft_mag, size_t sample_size, double sample_rate);

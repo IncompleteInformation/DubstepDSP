@@ -56,33 +56,6 @@ static void onKeyPress (GLFWwindow* window, int key, int scancode, int action, i
         glfwSetWindowShouldClose(window, GL_TRUE);
 }
 
-// static void calc_spectral_centroid()
-// /* this calculates a linear-weighted spectral centroid */
-// {
-//     double top_sum = 0;
-//     double bottom_sum = 0;
-//     for (int i=0; i<FFT_SIZE/2 + 1; ++i)
-//     {
-//         // spectral magnitude is already contained in fft_result 
-//         bottom_sum+=fft_result[i];
-//         top_sum+=fft_result[i]*(i+1)*BIN_SIZE; 
-//     }
-//     spectral_centroid = top_sum/bottom_sum;
-//     //printf("%f\n", spectral_centroid);
-//     return;
-//}
-// typedef struct{
-//     float data[BUFFER_SIZE];
-//     float bufferData[BUFFER_SIZE];
-//     PaUtilRingBuffer buffer;
-//     float fft_buffer[FFT_SIZE];
-//     int fft_buffer_loc;
-
-//     double fft_mag[FFT_SIZE/2 + 1];
-//     fftw_complex fft[FFT_SIZE/2 + 1];
-//     double spectral_centroid;
-//     double dominant_frequency;
-// } userData;
 static void update_fft_buffer(float mic_bit, UserData* ud)
 {
     ud->fft_buffer[ud->fft_buffer_loc] = mic_bit;
@@ -94,7 +67,7 @@ static void update_fft_buffer(float mic_bit, UserData* ud)
             calc_fft(ud->fft_buffer, ud->fft, tmp, FFT_SIZE);
             calc_fft_mag(ud->fft, ud->fft_mag, FFT_SIZE);
             ud->dominant_frequency = dominant_freq(ud->fft, ud->fft_mag, FFT_SIZE, SAMPLE_RATE);
-            // calc_spectral_centroid();
+            ud->spectral_centroid = calc_spectral_centroid(ud->fft_mag,FFT_SIZE, SAMPLE_RATE);
         }
 }
 static int onAudioSync (const void* inputBuffer, void* outputBuffer,
@@ -119,6 +92,15 @@ static int onAudioSync (const void* inputBuffer, void* outputBuffer,
     return paContinue;
 }
 
+double xLogNormalize(double unscaled, double logMax)
+{
+    return log10(unscaled)/logMax;
+}
+double dbNormalize(double magnitude, double max_magnitude, double dbRange)
+{
+    double absDb = 10*log10(magnitude/max_magnitude); //between -inf and 0
+    return (dbRange+absDb)/dbRange; //between 0 and 1
+}
 int main (void)
 {
     UserData ud;
@@ -203,37 +185,58 @@ int main (void)
         glLoadIdentity();
 
         glBegin(GL_POINTS);
+        glColor3f(0.0f,0.5f,0.9f);
         PaUtil_ReadRingBuffer(&ud.buffer, &ud.data, BUFFER_SIZE);
         for (int i = 0; i < BUFFER_SIZE; ++i)
         {
-            glColor3f(0.0f,0.5f,0.9f);
             glVertex3f(2*aspectRatio*i/BUFFER_SIZE-aspectRatio, ud.data[i], 0.f);
         }
         glEnd();
-
+        
+        //fft_mag graph (db, log)
         glBegin(GL_LINE_STRIP);
+        glColor3f(1.0f,0.0f,1.0f);
         PaUtil_ReadRingBuffer(&ud.buffer, &ud.data, BUFFER_SIZE);
+        double logMax = log10(SAMPLE_RATE/2);
         for (int i = 0; i < FFT_SIZE/2+1; ++i)
         {
-            glColor3f(1.0f,0.0f,1.0f);
-            double logI = log10(i)*(FFT_SIZE/2+1)/log10(FFT_SIZE/2+1);
-            double scaledMag = 10*log10(ud.fft_mag[i]/FFT_SIZE);
-            scaledMag = (dbRange+scaledMag)/dbRange;
-            glVertex3f(2*aspectRatio*logI/(FFT_SIZE/2 + 1)-aspectRatio, 2*scaledMag-1, 0.f);
+            double logI = xLogNormalize(i*BIN_SIZE, logMax);
+            double scaledMag = dbNormalize(ud.fft_mag[i], FFT_SIZE, dbRange);
+            glVertex3f(2*aspectRatio*logI-aspectRatio, 2*scaledMag-1, 0.f);
         }
         glEnd();
+        
+        //specral centroid marker
         glBegin(GL_LINES);
-//        int j = 0;
-//        int k = 1;
-//        while(j<(FFT_SIZE/2+1))
-//        {
-//            glColor3f(0.5f,0.5f,0.5f);
-//            double logJ = log10(j)*(FFT_SIZE/2+1)/log10(FFT_SIZE/2+1);
-//            glVertex3f(2*aspectRatio*logJ/(FFT_SIZE/2 + 1)-aspectRatio, -1, 0.f);
-//            glVertex3f(2*aspectRatio*logJ/(FFT_SIZE/2 + 1)-aspectRatio, 1, 0.f);
-//            j+=k;
-//            if (j==k*10) k*=10;
-//        }
+        glColor3f(1.f, 0.f, 0.f);
+        double logCentroid = log10(ud.spectral_centroid)*(SAMPLE_RATE/2)/log10(SAMPLE_RATE/2+1);
+        glVertex3f(2*aspectRatio*logCentroid/(SAMPLE_RATE/2)-aspectRatio, -1, 0.f);
+        glVertex3f(2*aspectRatio*logCentroid/(SAMPLE_RATE/2)-aspectRatio, 1, 0.f);
+        glEnd();
+        
+        //dominant pitch line
+        glBegin(GL_LINES);
+        glColor3f(0.f, 1.f, 0.f);
+        printf("%f\n", ud.dominant_frequency);
+        logMax = log10(SAMPLE_RATE/2);
+        double logNormDomFreq = xLogNormalize(ud.dominant_frequency, logMax);
+        glVertex3f(aspectRatio*(2*logNormDomFreq-1), -1, 0.f);
+        glVertex3f(aspectRatio*(2*logNormDomFreq-1), 1, 0.f);
+        glEnd();
+        
+        //log lines
+        glBegin(GL_LINES);
+        int j = 0;
+        int k = 10;
+        while(j<(SAMPLE_RATE/2))
+        {
+            glColor3f(0.5f,0.5f,0.5f);
+            double logJ = xLogNormalize((double)j, log10(SAMPLE_RATE/2));
+            glVertex3f(aspectRatio*(2*logJ-1), -1, 0.f);
+            glVertex3f(aspectRatio*(2*logJ-1), 1, 0.f);
+            j+=k;
+            if (j==k*10) k*=10;
+        }
         glEnd();
 
         glfwSwapBuffers(window);
