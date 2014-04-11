@@ -35,6 +35,7 @@ typedef struct{
     double spectral_centroid;
     double dominant_frequency;
     double dominant_frequency_lp;
+    double average_amplitude;
 } UserData;
 
 static void glfwError (int error, const char* description)
@@ -75,6 +76,7 @@ static void update_fft_buffer(float mic_bit, UserData* ud)
             ud->dominant_frequency = dominant_freq(ud->fft, ud->fft_mag, FFT_SIZE, SAMPLE_RATE);
             ud->spectral_centroid = calc_spectral_centroid(ud->fft_mag,FFT_SIZE, SAMPLE_RATE);
             ud->dominant_frequency_lp = dominant_freq_lp(ud->fft, ud->fft_mag, FFT_SIZE, SAMPLE_RATE, 250);
+            ud->average_amplitude = avg_amplitude(ud->fft_mag, FFT_SIZE);
         }
 }
 static int onAudioSync (const void* inputBuffer, void* outputBuffer,
@@ -226,6 +228,8 @@ int main (void)
         }
         glEnd();
         
+        printf("%f\n", ud.average_amplitude);
+        
         //specral centroid marker
         glBegin(GL_LINES);
         glColor3f(1.f, 0.f, 0.f);
@@ -246,7 +250,7 @@ int main (void)
         //dominant pitch line (lowpassed)
         glBegin(GL_LINES);
         glColor3f(0.f, 1.f, 1.f);
-        printf("%f\n", ud.dominant_frequency_lp);
+//        printf("%f\n", ud.dominant_frequency_lp);
         logMax = log10(SAMPLE_RATE/2);
         double logNormDomFreq_lp = xLogNormalize(ud.dominant_frequency_lp, logMax);
         glVertex3f(aspectRatio*(2*logNormDomFreq_lp-1), -1, 0.f);
