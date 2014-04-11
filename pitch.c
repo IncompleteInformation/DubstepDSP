@@ -100,3 +100,21 @@ double avg_amplitude (double* fft_mag, size_t sample_size)
     average = average/(sample_size/2 + 1);
     return average;
 }
+
+double calc_spectral_crest(double* fft_mag, size_t sample_size, double sample_rate)
+{
+    double max = 0;
+    size_t maxi;
+    double total = 0;
+    for (int i = 0; i < sample_size/2 + 1; ++i)
+    {
+        total += fft_mag[i];
+        if (fft_mag[i] > max)
+        {
+            max = fft_mag[i];
+            maxi = i+1;
+        }
+    }
+    double crest = (max*sample_size)/total;
+    return crest;
+}

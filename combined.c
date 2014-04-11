@@ -14,6 +14,7 @@
 #define BUFFER_SIZE   (65536)
 #define FRAMES_PER_BUFFER  (64)
 #define FFT_SIZE (1024) //512 = 11ms delay, 86Hz bins
+#define ONSET_FFT_SIZE (64)
 #define BIN_SIZE ((double) SAMPLE_RATE/FFT_SIZE)
 
 #ifndef M_PI
@@ -26,6 +27,7 @@ typedef struct{
     PaUtilRingBuffer buffer;
 
     double fft_buffer[FFT_SIZE];
+    double ONSET_FFT_BUFFER[ONSET_FFT_SIZE];
     int fft_buffer_loc;
     fftw_complex fft[FFT_SIZE/2 + 1];
     fftw_complex fft_fft[(FFT_SIZE/2 +1)/2 +1];
@@ -36,6 +38,7 @@ typedef struct{
     double dominant_frequency;
     double dominant_frequency_lp;
     double average_amplitude;
+    double spectral_crest;
 } UserData;
 
 static void glfwError (int error, const char* description)

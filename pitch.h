@@ -38,3 +38,5 @@ double dominant_freq_lp (fftw_complex* fft, double* fft_mag, size_t sample_size,
 //   fft_mag:     input array of length sample_size/2+1
 //   sample_size: the length of the sample array
 double avg_amplitude (double* fft_mag, size_t sample_size);
+
+double calc_spectral_crest(double* fft_mag, size_t sample_size, double sample_rate);
