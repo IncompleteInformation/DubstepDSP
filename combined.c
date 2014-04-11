@@ -28,10 +28,13 @@ typedef struct{
     double fft_buffer[FFT_SIZE];
     int fft_buffer_loc;
     fftw_complex fft[FFT_SIZE/2 + 1];
+    fftw_complex fft_fft[(FFT_SIZE/2 +1)/2 +1];
     double fft_mag[FFT_SIZE/2 + 1];
+    double fft_fft_mag[(FFT_SIZE/2+1)/2+1];
 
     double spectral_centroid;
     double dominant_frequency;
+    double dominant_frequency_lp;
 } UserData;
 
 static void glfwError (int error, const char* description)
@@ -64,10 +67,14 @@ static void update_fft_buffer(float mic_bit, UserData* ud)
         {
             ud->fft_buffer_loc=0;
             double tmp[FFT_SIZE];
+            double tmp2[FFT_SIZE/2 + 1];
             calc_fft(ud->fft_buffer, ud->fft, tmp, FFT_SIZE);
             calc_fft_mag(ud->fft, ud->fft_mag, FFT_SIZE);
+            calc_fft(ud->fft_mag, ud->fft_fft, tmp2, FFT_SIZE/2 +1);
+            calc_fft_mag(ud->fft_fft, ud->fft_fft_mag, FFT_SIZE/2 + 1);
             ud->dominant_frequency = dominant_freq(ud->fft, ud->fft_mag, FFT_SIZE, SAMPLE_RATE);
             ud->spectral_centroid = calc_spectral_centroid(ud->fft_mag,FFT_SIZE, SAMPLE_RATE);
+            ud->dominant_frequency_lp = dominant_freq_lp(ud->fft, ud->fft_mag, FFT_SIZE, SAMPLE_RATE, 250);
         }
 }
 static int onAudioSync (const void* inputBuffer, void* outputBuffer,
@@ -206,6 +213,19 @@ int main (void)
         }
         glEnd();
         
+        //fft_fft_mag graph (db, log)
+        glBegin(GL_LINE_STRIP);
+        glColor3f(1.0f,1.0f,1.0f);
+        PaUtil_ReadRingBuffer(&ud.buffer, &ud.data, BUFFER_SIZE);
+        logMax = log10(SAMPLE_RATE/2);
+        for (int i = 0; i < (FFT_SIZE/2+1)/2+1; ++i)
+        {
+            double logI = xLogNormalize(i*BIN_SIZE, logMax);
+            double scaledMag = dbNormalize(ud.fft_fft_mag[i], FFT_SIZE*FFT_SIZE, dbRange);
+            glVertex3f(2*aspectRatio*logI-aspectRatio, 2*scaledMag-1, 0.f);
+        }
+        glEnd();
+        
         //specral centroid marker
         glBegin(GL_LINES);
         glColor3f(1.f, 0.f, 0.f);
@@ -217,21 +237,31 @@ int main (void)
         //dominant pitch line
         glBegin(GL_LINES);
         glColor3f(0.f, 1.f, 0.f);
-        printf("%f\n", ud.dominant_frequency);
         logMax = log10(SAMPLE_RATE/2);
         double logNormDomFreq = xLogNormalize(ud.dominant_frequency, logMax);
         glVertex3f(aspectRatio*(2*logNormDomFreq-1), -1, 0.f);
         glVertex3f(aspectRatio*(2*logNormDomFreq-1), 1, 0.f);
         glEnd();
         
+        //dominant pitch line (lowpassed)
+        glBegin(GL_LINES);
+        glColor3f(0.f, 1.f, 1.f);
+        printf("%f\n", ud.dominant_frequency_lp);
+        logMax = log10(SAMPLE_RATE/2);
+        double logNormDomFreq_lp = xLogNormalize(ud.dominant_frequency_lp, logMax);
+        glVertex3f(aspectRatio*(2*logNormDomFreq_lp-1), -1, 0.f);
+        glVertex3f(aspectRatio*(2*logNormDomFreq_lp-1), 1, 0.f);
+        glEnd();
+        
         //log lines
         glBegin(GL_LINES);
         int j = 0;
         int k = 10;
+        double logLogLinesX = log10(SAMPLE_RATE/2);
         while(j<(SAMPLE_RATE/2))
         {
-            glColor3f(0.5f,0.5f,0.5f);
-            double logJ = xLogNormalize((double)j, log10(SAMPLE_RATE/2));
+            glColor3f(0.6f,0.4f,0.1f);
+            double logJ = xLogNormalize((double)j, logLogLinesX);
             glVertex3f(aspectRatio*(2*logJ-1), -1, 0.f);
             glVertex3f(aspectRatio*(2*logJ-1), 1, 0.f);
             j+=k;
