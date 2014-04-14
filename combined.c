@@ -9,6 +9,7 @@
 #include <GLFW/glfw3.h>
 #include <portaudio.h>
 #include <fftw3.h>
+#include <portmidi.h>
 
 #define SAMPLE_RATE   (double)(44100)
 #define BUFFER_SIZE   (65536)
@@ -39,6 +40,14 @@ typedef struct{
     double dominant_frequency_lp;
     double average_amplitude;
     double spectral_crest;
+    double spectral_flatness;
+    
+    double onset_fft_buffer[ONSET_FFT_SIZE];
+    fftw_complex onset_fft[ONSET_FFT_SIZE];
+    double onset_fft_mag[ONSET_FFT_SIZE/2+1];
+    double onset_average_amplitude;
+    int    onset_fft_buffer_loc;
+    int    onset_triggered;
 } UserData;
 
 static void glfwError (int error, const char* description)
@@ -65,6 +74,18 @@ static void onKeyPress (GLFWwindow* window, int key, int scancode, int action, i
 
 static void update_fft_buffer(float mic_bit, UserData* ud)
 {
+    ud->onset_fft_buffer[ud->onset_fft_buffer_loc] = mic_bit;
+    ++ud->onset_fft_buffer_loc;
+    if (ud->onset_fft_buffer_loc==ONSET_FFT_SIZE)
+        {
+            ud->onset_fft_buffer_loc = 0;
+            double tmp[ONSET_FFT_SIZE];
+            calc_fft(ud->onset_fft_buffer, ud->onset_fft, tmp, ONSET_FFT_SIZE);
+            calc_fft_mag(ud->onset_fft, ud->onset_fft_mag, ONSET_FFT_SIZE/2+1);
+            ud->onset_average_amplitude = calc_avg_amplitude(ud->onset_fft_mag, ONSET_FFT_SIZE, SAMPLE_RATE, 0, SAMPLE_RATE/2);
+        }
+    //stall calculations of large ffts until onset is detected. This will currently cancel the last 25ms of a transform that with p>.5, should happen. IDC right now. Mechanism is to reset fft_buffer_loc back to the beginning.
+    if (ud->onset_average_amplitude<.001) ud->fft_buffer_loc = 0;
     ud->fft_buffer[ud->fft_buffer_loc] = mic_bit;
     ++ud->fft_buffer_loc;
     if (ud->fft_buffer_loc==FFT_SIZE)
@@ -79,7 +100,12 @@ static void update_fft_buffer(float mic_bit, UserData* ud)
             ud->dominant_frequency = dominant_freq(ud->fft, ud->fft_mag, FFT_SIZE, SAMPLE_RATE);
             ud->spectral_centroid = calc_spectral_centroid(ud->fft_mag,FFT_SIZE, SAMPLE_RATE);
             ud->dominant_frequency_lp = dominant_freq_lp(ud->fft, ud->fft_mag, FFT_SIZE, SAMPLE_RATE, 250);
-            ud->average_amplitude = avg_amplitude(ud->fft_mag, FFT_SIZE);
+            ud->average_amplitude = calc_avg_amplitude(ud->fft_mag, FFT_SIZE, SAMPLE_RATE, 0, FFT_SIZE/2);
+            ud->spectral_crest = calc_spectral_crest(ud->fft_mag, FFT_SIZE, SAMPLE_RATE);
+            ud->spectral_flatness = calc_spectral_flatness(ud->fft_mag, FFT_SIZE, SAMPLE_RATE, 0, SAMPLE_RATE/2);
+            
+            //onset fft settings and calculations
+            
         }
 }
 static int onAudioSync (const void* inputBuffer, void* outputBuffer,
@@ -117,6 +143,8 @@ int main (void)
 {
     UserData ud;
     ud.fft_buffer_loc = 0;
+    ud.onset_fft_buffer_loc = 0;
+    ud.onset_triggered = 0;
 
     // Initialize ring buffer
     PaUtil_InitializeRingBuffer(&ud.buffer, sizeof(float), BUFFER_SIZE, &ud.bufferData);
@@ -195,15 +223,16 @@ int main (void)
 
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
-
-        glBegin(GL_POINTS);
-        glColor3f(0.0f,0.5f,0.9f);
-        PaUtil_ReadRingBuffer(&ud.buffer, &ud.data, BUFFER_SIZE);
-        for (int i = 0; i < BUFFER_SIZE; ++i)
-        {
-            glVertex3f(2*aspectRatio*i/BUFFER_SIZE-aspectRatio, ud.data[i], 0.f);
-        }
-        glEnd();
+        
+//        // ringbuffer visualization
+//        glBegin(GL_POINTS);
+//        glColor3f(0.0f,0.5f,0.9f);
+//        PaUtil_ReadRingBuffer(&ud.buffer, &ud.data, BUFFER_SIZE);
+//        for (int i = 0; i < BUFFER_SIZE; ++i)
+//        {
+//            glVertex3f(2*aspectRatio*i/BUFFER_SIZE-aspectRatio, ud.data[i], 0.f);
+//        }
+//        glEnd();
         
         //fft_mag graph (db, log)
         glBegin(GL_LINE_STRIP);
@@ -217,21 +246,19 @@ int main (void)
             glVertex3f(2*aspectRatio*logI-aspectRatio, 2*scaledMag-1, 0.f);
         }
         glEnd();
-        
-        //fft_fft_mag graph (db, log)
-        glBegin(GL_LINE_STRIP);
-        glColor3f(1.0f,1.0f,1.0f);
-        PaUtil_ReadRingBuffer(&ud.buffer, &ud.data, BUFFER_SIZE);
-        logMax = log10(SAMPLE_RATE/2);
-        for (int i = 0; i < (FFT_SIZE/2+1)/2+1; ++i)
-        {
-            double logI = xLogNormalize(i*BIN_SIZE, logMax);
-            double scaledMag = dbNormalize(ud.fft_fft_mag[i], FFT_SIZE*FFT_SIZE, dbRange);
-            glVertex3f(2*aspectRatio*logI-aspectRatio, 2*scaledMag-1, 0.f);
-        }
-        glEnd();
-        
-        printf("%f\n", ud.average_amplitude);
+//
+//        //fft_fft_mag graph (db, log)
+//        glBegin(GL_LINE_STRIP);
+//        glColor3f(1.0f,1.0f,1.0f);
+//        PaUtil_ReadRingBuffer(&ud.buffer, &ud.data, BUFFER_SIZE);
+//        logMax = log10(SAMPLE_RATE/2);
+//        for (int i = 0; i < (FFT_SIZE/2+1)/2+1; ++i)
+//        {
+//            double logI = xLogNormalize(i*BIN_SIZE, logMax);
+//            double scaledMag = dbNormalize(ud.fft_fft_mag[i], FFT_SIZE*FFT_SIZE, dbRange);
+//            glVertex3f(2*aspectRatio*logI-aspectRatio, 2*scaledMag-1, 0.f);
+//        }
+//        glEnd();
         
         //specral centroid marker
         glBegin(GL_LINES);
@@ -241,24 +268,27 @@ int main (void)
         glVertex3f(2*aspectRatio*logCentroid/(SAMPLE_RATE/2)-aspectRatio, 1, 0.f);
         glEnd();
         
-        //dominant pitch line
-        glBegin(GL_LINES);
-        glColor3f(0.f, 1.f, 0.f);
-        logMax = log10(SAMPLE_RATE/2);
-        double logNormDomFreq = xLogNormalize(ud.dominant_frequency, logMax);
-        glVertex3f(aspectRatio*(2*logNormDomFreq-1), -1, 0.f);
-        glVertex3f(aspectRatio*(2*logNormDomFreq-1), 1, 0.f);
-        glEnd();
+//        //dominant pitch line
+//        glBegin(GL_LINES);
+//        glColor3f(0.f, 1.f, 0.f);
+//        logMax = log10(SAMPLE_RATE/2);
+//        double logNormDomFreq = xLogNormalize(ud.dominant_frequency, logMax);
+//        glVertex3f(aspectRatio*(2*logNormDomFreq-1), -1, 0.f);
+//        glVertex3f(aspectRatio*(2*logNormDomFreq-1), 1, 0.f);
+//        glEnd();
         
         //dominant pitch line (lowpassed)
         glBegin(GL_LINES);
         glColor3f(0.f, 1.f, 1.f);
 //        printf("%f\n", ud.dominant_frequency_lp);
-        logMax = log10(SAMPLE_RATE/2);
-        double logNormDomFreq_lp = xLogNormalize(ud.dominant_frequency_lp, logMax);
+        double domlogMax = log10(SAMPLE_RATE/2);
+        double logNormDomFreq_lp = xLogNormalize(ud.dominant_frequency_lp, domlogMax);
         glVertex3f(aspectRatio*(2*logNormDomFreq_lp-1), -1, 0.f);
         glVertex3f(aspectRatio*(2*logNormDomFreq_lp-1), 1, 0.f);
         glEnd();
+        
+        //spectral crest
+        //printf("spectral crest: %f\n", ud.spectral_crest);
         
         //log lines
         glBegin(GL_LINES);
@@ -278,6 +308,14 @@ int main (void)
 
         glfwSwapBuffers(window);
         glfwPollEvents();
+        
+        //PRINT STATEMENTS
+//        printf("full_spectrum amplitude: %f\n", ud.average_amplitude);
+//        printf("full_spectrum_flatness: %f\n", ud.spectral_flatness);
+//        printf("low_passed_dom_freq: %f\n", ud.dominant_frequency_lp);
+//        printf("first 8 bins: %06.2f %06.2f %06.2f %06.2f %06.2f %06.2f %06.2f %06.2f\n", ud.fft_mag[0], ud.fft_mag[1], ud.fft_mag[2], ud.fft_mag[3], ud.fft_mag[4], ud.fft_mag[5], ud.fft_mag[6], ud.fft_mag[7]);
+        printf("onset amplitude: %f\n",ud.onset_average_amplitude);
+        
     }
 
     // Shut down GLFW

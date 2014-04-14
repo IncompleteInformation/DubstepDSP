@@ -1,0 +1,5 @@
+need to be able to write to midi
+calc_average_amplitude outputs something unscaled. Want it to go from 0 to 1
+spectral flatness TBI.
+calc_average_amplitude needs a high and low parameter so that we can examine portions of the spectrum instead of all at once.
+I suspect that the db scaling of fft_mag is slightly off. 

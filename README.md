@@ -20,6 +20,9 @@ brew install libsndfile
 
 # Install PortAudio
 brew install portaudio
+
+# Install PortMidi
+brew install portmidi
 ```
 
 - **FFTW:** http://www.fftw.org
