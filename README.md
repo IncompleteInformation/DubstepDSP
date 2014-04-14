@@ -31,8 +31,9 @@ brew install portmidi
 - **PortAudio:** http://www.portaudio.com
 - **PortMidi:** http://portmedia.sourceforge.net/portmidi
 
-## Building
+## Running
 
+First install and start a MIDI synthesizer. Then:
 ```
 make
 ```

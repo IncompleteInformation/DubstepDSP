@@ -134,5 +134,7 @@ int main (void)
     char path[1024];
     getcwd(path, 1024);
     strcat(path, "/pitch_tests");
-    dir_test(path);
+    if (!dir_test(path)) return 1;
+
+    return 0;
 }
