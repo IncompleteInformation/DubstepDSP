@@ -52,6 +52,7 @@ typedef struct{
     double onset_average_amplitude;
     int    onset_fft_buffer_loc;
     int    onset_triggered;
+    //
 } UserData;
 
 static void glfwError (int error, const char* description)
@@ -99,14 +100,14 @@ static void update_fft_buffer(float mic_bit, UserData* ud)
             double tmp2[FFT_SIZE/2 + 1];
             calc_fft(ud->fft_buffer, ud->fft, tmp, FFT_SIZE);
             calc_fft_mag(ud->fft, ud->fft_mag, FFT_SIZE);
-            calc_fft(ud->fft_mag, ud->fft_fft, tmp2, FFT_SIZE/2 +1);
-            calc_fft_mag(ud->fft_fft, ud->fft_fft_mag, FFT_SIZE/2 + 1);
-            ud->dominant_frequency = dominant_freq(ud->fft, ud->fft_mag, FFT_SIZE, SAMPLE_RATE);
+            //calc_fft(ud->fft_mag, ud->fft_fft, tmp2, FFT_SIZE/2 +1);
+            //calc_fft_mag(ud->fft_fft, ud->fft_fft_mag, FFT_SIZE/2 + 1);
+            ud->dominant_frequency = 0; //dominant_freq(ud->fft, ud->fft_mag, FFT_SIZE, SAMPLE_RATE);
             ud->spectral_centroid = calc_spectral_centroid(ud->fft_mag,FFT_SIZE, SAMPLE_RATE);
-            ud->dominant_frequency_lp = dominant_freq_lp(ud->fft, ud->fft_mag, FFT_SIZE, SAMPLE_RATE, 250);
+            ud->dominant_frequency_lp = dominant_freq_lp(ud->fft, ud->fft_mag, FFT_SIZE, SAMPLE_RATE, 500);
             ud->average_amplitude = calc_avg_amplitude(ud->fft_mag, FFT_SIZE, SAMPLE_RATE, 0, FFT_SIZE/2);
-            ud->spectral_crest = calc_spectral_crest(ud->fft_mag, FFT_SIZE, SAMPLE_RATE);
-            ud->spectral_flatness = calc_spectral_flatness(ud->fft_mag, FFT_SIZE, SAMPLE_RATE, 0, SAMPLE_RATE/2);
+            ud->spectral_crest = 0; //calc_spectral_crest(ud->fft_mag, FFT_SIZE, SAMPLE_RATE);
+            ud->spectral_flatness = 0; //calc_spectral_flatness(ud->fft_mag, FFT_SIZE, SAMPLE_RATE, 0, SAMPLE_RATE/2);
             ud->harmonic_average = 0; //calc_harmonics(ud->fft, ud->fft_mag, FFT_SIZE, SAMPLE_RATE); //useless and computationally intensive
             
             //onset fft settings and calculations
@@ -155,12 +156,10 @@ int main (void)
     Pm_OpenOutput(&midi, 
                   Pm_GetDefaultOutputDeviceID(), // Output device
                   NULL,                          // Scoooby Dooby Doooh
-                  0,                             // Output buffer size
+                  0,                             // Useless buffer size
                   NULL,                          // ???
                   NULL,                          // Myyysterious
                   0);                            // Latency
-
-    Pm_WriteShort(midi, 0, Pm_Message(0x90, 60, 100));
 
     // Initialize ring buffer
     PaUtil_InitializeRingBuffer(&ud.buffer, sizeof(float), BUFFER_SIZE, &ud.bufferData);
@@ -222,6 +221,8 @@ int main (void)
 
     // Render shit for two seconds
     glfwSetTime(0);
+    
+    int note_on = 0;
     while (!glfwWindowShouldClose(window))
     {
         float aspectRatio;
@@ -328,11 +329,43 @@ int main (void)
         //PRINT STATEMENTS
 //        printf("full_spectrum amplitude: %f\n", ud.average_amplitude);
 //        printf("full_spectrum_flatness: %f\n", ud.spectral_flatness);
-        printf("low_passed_dom_freq: %f\n", ud.dominant_frequency_lp);
+//        printf("low_passed_dom_freq : %f\n", ud.dominant_frequency_lp);
 //        printf("first 8 bins: %06.2f %06.2f %06.2f %06.2f %06.2f %06.2f %06.2f %06.2f\n", ud.fft_mag[0], ud.fft_mag[1], ud.fft_mag[2], ud.fft_mag[3], ud.fft_mag[4], ud.fft_mag[5], ud.fft_mag[6], ud.fft_mag[7]);
 //        printf("onset amplitude: %f\n",ud.onset_average_amplitude);
 //        printf("harmonic average vs. lp_pitch: %f %f\n", ud.harmonic_average, ud.dominant_frequency_lp);
         
+        //MIDI OUT STATEMENTS
+        if (ud.onset_average_amplitude>.01){
+            if (!note_on)
+            {
+                Pm_WriteShort(midi, 0, Pm_Message(0x90, 54, 100/*(int)ud.average_amplitude*/));
+                note_on = 1;
+            }
+            //0x2000 is 185 hz, 0x0000 is 73.416, 0x3fff is 466.16
+            double midiNumber = 12 * log2(ud.dominant_frequency_lp/440) + 69;
+            //0x0000 is 38, 0x3fff is 70
+            int outputPitch = (int)((midiNumber-38)/32*0x3FFF);
+            int lsb_7 = outputPitch&0x7F;
+            int msb_7 = (outputPitch>>7)&0x7F;
+            int outputCentroid = (int)((ud.spectral_centroid-400)/600*127);
+//            Pm_WriteShort(midi, 0, Pm_Message(0xB0, 21, outputCentroid));
+//            Pm_WriteShort(midi, 0, Pm_Message(0xE0, lsb_7, msb_7));
+            
+            PmEvent buf[2];
+            buf[0].timestamp = 0; buf[1].timestamp = 0;
+            buf[0].message = Pm_Message(0xB0, 21, outputCentroid);
+            buf[1].message = Pm_Message(0xE0, lsb_7, msb_7);
+            Pm_Write(midi, buf, 2);
+
+            
+            
+        }
+        else{
+            if (note_on) {
+                Pm_WriteShort(midi, 0, Pm_Message(0x80, 54, 100));
+                note_on = 0;
+            }
+        }
     }
 
     // Shut down GLFW
