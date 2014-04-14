@@ -22,6 +22,8 @@
 #define M_PI  (3.14159265)
 #endif
 
+PmStream* midi;
+
 typedef struct{
     float data[BUFFER_SIZE];
     float bufferData[BUFFER_SIZE];
@@ -121,7 +123,7 @@ static int onAudioSync (const void* inputBuffer, void* outputBuffer,
     float* in = (float*)inputBuffer;
     //float* out = (float*)outputBuffer;
 
-    PaUtil_WriteRingBuffer(&ud->buffer, in, framesPerBuffer);
+    PaUtil_WriteRingBuffer(&ud->buffer, in, (int)framesPerBuffer);
     for (int i = 0; i < framesPerBuffer; ++i)
     {
         if (in[i] > 1){update_fft_buffer(1, ud);printf("%s\n", "clipping high");continue;}
@@ -148,6 +150,17 @@ int main (void)
     ud.fft_buffer_loc = 0;
     ud.onset_fft_buffer_loc = 0;
     ud.onset_triggered = 0;
+
+    // Initialize PortMidi
+    Pm_OpenOutput(&midi, 
+                  Pm_GetDefaultOutputDeviceID(), // Output device
+                  NULL,                          // Scoooby Dooby Doooh
+                  0,                             // Output buffer size
+                  NULL,                          // ???
+                  NULL,                          // Myyysterious
+                  0);                            // Latency
+
+    Pm_WriteShort(midi, 0, Pm_Message(0x90, 60, 100));
 
     // Initialize ring buffer
     PaUtil_InitializeRingBuffer(&ud.buffer, sizeof(float), BUFFER_SIZE, &ud.bufferData);
@@ -330,6 +343,10 @@ int main (void)
     paCheckError(Pa_StopStream(stream));
     paCheckError(Pa_CloseStream(stream));
     Pa_Terminate();
+
+    // Shut down PortMidi
+    Pm_Close(midi);
+    Pm_Terminate();
 
     // Exit happily
     exit(EXIT_SUCCESS);

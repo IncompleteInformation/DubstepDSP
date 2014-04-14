@@ -9,7 +9,7 @@
 void calc_fft (double* sample, fftw_complex* fft, double* tmp, size_t sample_size)
 {
     for (size_t i = 0; i < sample_size; ++i) tmp[i] = sample[i];
-    fftw_plan plan_forward = fftw_plan_dft_r2c_1d(sample_size, tmp, fft, FFTW_ESTIMATE);
+    fftw_plan plan_forward = fftw_plan_dft_r2c_1d((int)sample_size, tmp, fft, FFTW_ESTIMATE);
     fftw_execute (plan_forward);
     fftw_destroy_plan(plan_forward);
 }

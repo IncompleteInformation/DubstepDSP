@@ -17,6 +17,7 @@
 		046F406B18F52A43002BC68A /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 046F406718F52A43002BC68A /* IOKit.framework */; };
 		046F406C18F52A43002BC68A /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 046F406818F52A43002BC68A /* OpenGL.framework */; };
 		046F406E18F52A56002BC68A /* libportaudio.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 046F406D18F52A56002BC68A /* libportaudio.a */; };
+		CD17F51C18FBA17A00A7FAC7 /* libportmidi.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = CD17F51B18FBA17A00A7FAC7 /* libportmidi.dylib */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -46,6 +47,7 @@
 		046F406718F52A43002BC68A /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = /System/Library/Frameworks/IOKit.framework; sourceTree = "<group>"; };
 		046F406818F52A43002BC68A /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = /System/Library/Frameworks/OpenGL.framework; sourceTree = "<group>"; };
 		046F406D18F52A56002BC68A /* libportaudio.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libportaudio.a; path = /usr/local/Cellar/portaudio/19.20111121/lib/libportaudio.a; sourceTree = "<group>"; };
+		CD17F51B18FBA17A00A7FAC7 /* libportmidi.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libportmidi.dylib; path = ../../../../usr/local/Cellar/portmidi/217/lib/libportmidi.dylib; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -55,6 +57,7 @@
 			files = (
 				046F406218F523E8002BC68A /* libfftw3.a in Frameworks */,
 				046F406418F529A9002BC68A /* libglfw3.a in Frameworks */,
+				CD17F51C18FBA17A00A7FAC7 /* libportmidi.dylib in Frameworks */,
 				046F406918F52A43002BC68A /* Cocoa.framework in Frameworks */,
 				046F406E18F52A56002BC68A /* libportaudio.a in Frameworks */,
 				046F406B18F52A43002BC68A /* IOKit.framework in Frameworks */,
@@ -76,7 +79,8 @@
 				046F406118F523E8002BC68A /* libfftw3.a */,
 				046F406318F529A9002BC68A /* libglfw3.a */,
 				046F406D18F52A56002BC68A /* libportaudio.a */,
-				046F404618F5222D002BC68A,
+				CD17F51B18FBA17A00A7FAC7 /* libportmidi.dylib */,
+				046F404618F5222D002BC68A /* Source */,
 				046F404518F5222D002BC68A /* Products */,
 			);
 			sourceTree = "<group>";
@@ -89,7 +93,7 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		046F404618F5222D002BC68A = {
+		046F404618F5222D002BC68A /* Source */ = {
 			isa = PBXGroup;
 			children = (
 				046F405118F52393002BC68A /* combined.c */,
@@ -99,6 +103,7 @@
 				046F405618F52393002BC68A /* pitch.c */,
 				046F405718F52393002BC68A /* pitch.h */,
 			);
+			name = Source;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -239,6 +244,7 @@
 					/usr/local/lib,
 					/usr/local/Cellar/fftw/3.3.3/lib,
 					/usr/local/Cellar/portaudio/19.20111121/lib,
+					/usr/local/Cellar/portmidi/217/lib,
 				);
 				OTHER_CFLAGS = "-I/usr/local/include";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -253,6 +259,7 @@
 					/usr/local/lib,
 					/usr/local/Cellar/fftw/3.3.3/lib,
 					/usr/local/Cellar/portaudio/19.20111121/lib,
+					/usr/local/Cellar/portmidi/217/lib,
 				);
 				OTHER_CFLAGS = "-I/usr/local/include";
 				PRODUCT_NAME = "$(TARGET_NAME)";
