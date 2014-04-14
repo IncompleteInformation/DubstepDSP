@@ -7,10 +7,10 @@ int main (int argc, char *argv[])
 
     Pm_OpenOutput(&midi, 
                   Pm_GetDefaultOutputDeviceID(), // Output device
-                  NULL,                          // Scoooby Dooby Doooh
+                  NULL,                          //
                   0,                             // Output buffer size
-                  NULL,                          // ???
-                  NULL,                          // Myyysterious
+                  NULL,                          //
+                  NULL,                          //
                   0);                            // Latency
 
     Pm_WriteShort(midi, 0, Pm_Message(0x90, 60, 100));

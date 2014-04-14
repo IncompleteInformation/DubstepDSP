@@ -152,7 +152,7 @@ int main (void)
     ud.onset_triggered = 0;
 
     // Initialize PortMidi
-    Pm_OpenOutput(&midi, 
+    Pm_OpenOutput(&midi,
                   Pm_GetDefaultOutputDeviceID(), // Output device
                   NULL,                          // Scoooby Dooby Doooh
                   0,                             // Output buffer size
