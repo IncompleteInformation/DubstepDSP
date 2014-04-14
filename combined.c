@@ -26,7 +26,7 @@ typedef struct{
     float data[BUFFER_SIZE];
     float bufferData[BUFFER_SIZE];
     PaUtilRingBuffer buffer;
-
+    //fft generators et cetera
     double fft_buffer[FFT_SIZE];
     double ONSET_FFT_BUFFER[ONSET_FFT_SIZE];
     int fft_buffer_loc;
@@ -34,14 +34,16 @@ typedef struct{
     fftw_complex fft_fft[(FFT_SIZE/2 +1)/2 +1];
     double fft_mag[FFT_SIZE/2 + 1];
     double fft_fft_mag[(FFT_SIZE/2+1)/2+1];
-
+    double harmonics[FFT_SIZE/2+1];
+    //fft analyzers
     double spectral_centroid;
     double dominant_frequency;
     double dominant_frequency_lp;
     double average_amplitude;
     double spectral_crest;
     double spectral_flatness;
-    
+    double harmonic_average;
+    //onset detection
     double onset_fft_buffer[ONSET_FFT_SIZE];
     fftw_complex onset_fft[ONSET_FFT_SIZE];
     double onset_fft_mag[ONSET_FFT_SIZE/2+1];
@@ -103,6 +105,7 @@ static void update_fft_buffer(float mic_bit, UserData* ud)
             ud->average_amplitude = calc_avg_amplitude(ud->fft_mag, FFT_SIZE, SAMPLE_RATE, 0, FFT_SIZE/2);
             ud->spectral_crest = calc_spectral_crest(ud->fft_mag, FFT_SIZE, SAMPLE_RATE);
             ud->spectral_flatness = calc_spectral_flatness(ud->fft_mag, FFT_SIZE, SAMPLE_RATE, 0, SAMPLE_RATE/2);
+            ud->harmonic_average = 0; //calc_harmonics(ud->fft, ud->fft_mag, FFT_SIZE, SAMPLE_RATE); //useless and computationally intensive
             
             //onset fft settings and calculations
             
@@ -246,7 +249,7 @@ int main (void)
             glVertex3f(2*aspectRatio*logI-aspectRatio, 2*scaledMag-1, 0.f);
         }
         glEnd();
-//
+
 //        //fft_fft_mag graph (db, log)
 //        glBegin(GL_LINE_STRIP);
 //        glColor3f(1.0f,1.0f,1.0f);
@@ -312,9 +315,10 @@ int main (void)
         //PRINT STATEMENTS
 //        printf("full_spectrum amplitude: %f\n", ud.average_amplitude);
 //        printf("full_spectrum_flatness: %f\n", ud.spectral_flatness);
-//        printf("low_passed_dom_freq: %f\n", ud.dominant_frequency_lp);
+        printf("low_passed_dom_freq: %f\n", ud.dominant_frequency_lp);
 //        printf("first 8 bins: %06.2f %06.2f %06.2f %06.2f %06.2f %06.2f %06.2f %06.2f\n", ud.fft_mag[0], ud.fft_mag[1], ud.fft_mag[2], ud.fft_mag[3], ud.fft_mag[4], ud.fft_mag[5], ud.fft_mag[6], ud.fft_mag[7]);
-        printf("onset amplitude: %f\n",ud.onset_average_amplitude);
+//        printf("onset amplitude: %f\n",ud.onset_average_amplitude);
+//        printf("harmonic average vs. lp_pitch: %f %f\n", ud.harmonic_average, ud.dominant_frequency_lp);
         
     }
 

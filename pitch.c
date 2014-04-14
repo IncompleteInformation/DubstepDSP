@@ -97,7 +97,7 @@ double dominant_freq_lp (fftw_complex* fft, double* fft_mag, size_t sample_size,
     {
         normalized[i] = fft_mag[i]/max;
     }
-    double ratio = .25;
+    double ratio = .125;
     for (size_t i = 1; i<num_bins; ++i)
     {
         if ((normalized[i]>normalized[i-1]) && (normalized[i]>ratio))
@@ -189,4 +189,50 @@ double calc_spectral_crest(double* fft_mag, size_t sample_size, double sample_ra
     }
     double crest = (max*sample_size)/total;
     return crest;
+}
+
+double calc_harmonics(fftw_complex* fft, double* fft_mag, size_t sample_size, double sample_rate)
+{
+    double harmonics[sample_size/2+1];
+    harmonics[0] = -INFINITY;
+    harmonics[sample_size/2] = -INFINITY;
+    double peak;
+    double left;
+    double right;
+    double delta;
+    double est_freq;
+    //calc harmonics
+    for (size_t i = 1; i<sample_size/2; ++i)
+    {
+        if ((fft_mag[i]>fft_mag[i-1])&&(fft_mag[i]>fft_mag[i+1]))
+        {
+            peak  = fft[i][0];
+            left  = fft[i-1][0];
+            right = fft[i+1][0];
+            delta = (right - left) / (2 * peak - left - right);
+            est_freq = sample_rate / sample_size * (i - delta);
+            harmonics[i] = est_freq;
+        }else{
+            harmonics[i]=-INFINITY;
+        }
+    }
+    //calc average
+    double prev_harmonic = 0;
+    double harmonic_total = 0;
+    int    num_harmonics_seen = 0;
+    for (size_t i = 0; i<sample_size/2+1; ++i)
+    {
+        if ((harmonics[i]>200)&&(harmonics[i]<5000))
+        {
+            if (prev_harmonic==0) {
+                prev_harmonic = harmonics[i];
+                num_harmonics_seen=1;
+            }else{
+                harmonic_total+=(harmonics[i]-prev_harmonic);
+                prev_harmonic = harmonics[i];
+                num_harmonics_seen+=1;
+            }
+        }
+    }
+    return harmonic_total/num_harmonics_seen;
 }
