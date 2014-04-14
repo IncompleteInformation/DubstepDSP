@@ -1,4 +1,3 @@
-#include "pa_ringbuffer.h"
 #include "pitch.h"
 
 // #define GLFW_INCLUDE_GLCOREARB
@@ -27,7 +26,6 @@ PmStream* midi;
 typedef struct{
     float data[BUFFER_SIZE];
     float bufferData[BUFFER_SIZE];
-    PaUtilRingBuffer buffer;
     //fft generators et cetera
     double fft_buffer[FFT_SIZE];
     double ONSET_FFT_BUFFER[ONSET_FFT_SIZE];
@@ -123,7 +121,6 @@ static int onAudioSync (const void* inputBuffer, void* outputBuffer,
     float* in = (float*)inputBuffer;
     //float* out = (float*)outputBuffer;
 
-    PaUtil_WriteRingBuffer(&ud->buffer, in, (int)framesPerBuffer);
     for (int i = 0; i < framesPerBuffer; ++i)
     {
         if (in[i] > 1){update_fft_buffer(1, ud);printf("%s\n", "clipping high");continue;}
@@ -161,9 +158,6 @@ int main (void)
                   0);                            // Latency
 
     Pm_WriteShort(midi, 0, Pm_Message(0x90, 60, 100));
-
-    // Initialize ring buffer
-    PaUtil_InitializeRingBuffer(&ud.buffer, sizeof(float), BUFFER_SIZE, &ud.bufferData);
 
     // Initialize PortAudio
     paCheckError(Pa_Initialize());
@@ -240,20 +234,9 @@ int main (void)
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
         
-//        // ringbuffer visualization
-//        glBegin(GL_POINTS);
-//        glColor3f(0.0f,0.5f,0.9f);
-//        PaUtil_ReadRingBuffer(&ud.buffer, &ud.data, BUFFER_SIZE);
-//        for (int i = 0; i < BUFFER_SIZE; ++i)
-//        {
-//            glVertex3f(2*aspectRatio*i/BUFFER_SIZE-aspectRatio, ud.data[i], 0.f);
-//        }
-//        glEnd();
-        
         //fft_mag graph (db, log)
         glBegin(GL_LINE_STRIP);
         glColor3f(1.0f,0.0f,1.0f);
-        PaUtil_ReadRingBuffer(&ud.buffer, &ud.data, BUFFER_SIZE);
         double logMax = log10(SAMPLE_RATE/2);
         for (int i = 0; i < FFT_SIZE/2+1; ++i)
         {
@@ -262,19 +245,6 @@ int main (void)
             glVertex3f(2*aspectRatio*logI-aspectRatio, 2*scaledMag-1, 0.f);
         }
         glEnd();
-
-//        //fft_fft_mag graph (db, log)
-//        glBegin(GL_LINE_STRIP);
-//        glColor3f(1.0f,1.0f,1.0f);
-//        PaUtil_ReadRingBuffer(&ud.buffer, &ud.data, BUFFER_SIZE);
-//        logMax = log10(SAMPLE_RATE/2);
-//        for (int i = 0; i < (FFT_SIZE/2+1)/2+1; ++i)
-//        {
-//            double logI = xLogNormalize(i*BIN_SIZE, logMax);
-//            double scaledMag = dbNormalize(ud.fft_fft_mag[i], FFT_SIZE*FFT_SIZE, dbRange);
-//            glVertex3f(2*aspectRatio*logI-aspectRatio, 2*scaledMag-1, 0.f);
-//        }
-//        glEnd();
         
         //specral centroid marker
         glBegin(GL_LINES);

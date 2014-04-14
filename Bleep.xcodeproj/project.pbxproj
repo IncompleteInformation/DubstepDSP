@@ -7,8 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		046F405A18F52393002BC68A /* combined.c in Sources */ = {isa = PBXBuildFile; fileRef = 046F405118F52393002BC68A /* combined.c */; };
-		046F405B18F52393002BC68A /* pa_ringbuffer.c in Sources */ = {isa = PBXBuildFile; fileRef = 046F405318F52393002BC68A /* pa_ringbuffer.c */; };
+		046F405A18F52393002BC68A /* bleep.c in Sources */ = {isa = PBXBuildFile; fileRef = 046F405118F52393002BC68A /* bleep.c */; };
 		046F405D18F52393002BC68A /* pitch.c in Sources */ = {isa = PBXBuildFile; fileRef = 046F405618F52393002BC68A /* pitch.c */; };
 		046F406218F523E8002BC68A /* libfftw3.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 046F406118F523E8002BC68A /* libfftw3.a */; };
 		046F406418F529A9002BC68A /* libglfw3.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 046F406318F529A9002BC68A /* libglfw3.a */; };
@@ -49,10 +48,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		046F405118F52393002BC68A /* combined.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = combined.c; sourceTree = "<group>"; };
-		046F405218F52393002BC68A /* pa_memorybarrier.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pa_memorybarrier.h; sourceTree = "<group>"; };
-		046F405318F52393002BC68A /* pa_ringbuffer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pa_ringbuffer.c; sourceTree = "<group>"; };
-		046F405418F52393002BC68A /* pa_ringbuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pa_ringbuffer.h; sourceTree = "<group>"; };
+		046F405118F52393002BC68A /* bleep.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = bleep.c; sourceTree = "<group>"; };
 		046F405618F52393002BC68A /* pitch.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pitch.c; sourceTree = "<group>"; };
 		046F405718F52393002BC68A /* pitch.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pitch.h; sourceTree = "<group>"; };
 		046F406118F523E8002BC68A /* libfftw3.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libfftw3.a; path = /usr/local/Cellar/fftw/3.3.3/lib/libfftw3.a; sourceTree = "<absolute>"; };
@@ -112,10 +108,7 @@
 		046F404618F5222D002BC68A /* Source */ = {
 			isa = PBXGroup;
 			children = (
-				046F405118F52393002BC68A /* combined.c */,
-				046F405218F52393002BC68A /* pa_memorybarrier.h */,
-				046F405318F52393002BC68A /* pa_ringbuffer.c */,
-				046F405418F52393002BC68A /* pa_ringbuffer.h */,
+				046F405118F52393002BC68A /* bleep.c */,
 				046F405618F52393002BC68A /* pitch.c */,
 				046F405718F52393002BC68A /* pitch.h */,
 				CD4C4E0A18FBA8C7008E0329 /* pitch_test.c */,
@@ -235,8 +228,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				046F405D18F52393002BC68A /* pitch.c in Sources */,
-				046F405B18F52393002BC68A /* pa_ringbuffer.c in Sources */,
-				046F405A18F52393002BC68A /* combined.c in Sources */,
+				046F405A18F52393002BC68A /* bleep.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
