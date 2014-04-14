@@ -17,10 +17,6 @@
 #define ONSET_FFT_SIZE (64)
 #define BIN_SIZE ((double) SAMPLE_RATE/FFT_SIZE)
 
-#ifndef M_PI
-#define M_PI  (3.14159265)
-#endif
-
 PmStream* midi;
 
 typedef struct{
