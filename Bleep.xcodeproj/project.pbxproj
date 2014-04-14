@@ -23,6 +23,7 @@
 		CD4C4E0118FBA87E008E0329 /* libportaudio.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 046F406D18F52A56002BC68A /* libportaudio.a */; };
 		CD4C4E0B18FBA8C7008E0329 /* pitch_test.c in Sources */ = {isa = PBXBuildFile; fileRef = CD4C4E0A18FBA8C7008E0329 /* pitch_test.c */; };
 		CD4C4E0C18FBA904008E0329 /* pitch.c in Sources */ = {isa = PBXBuildFile; fileRef = 046F405618F52393002BC68A /* pitch.c */; };
+		CDCE460C18FBAB2300DECC82 /* pitch_tests in CopyFiles */ = {isa = PBXBuildFile; fileRef = CDCE460B18FBAB0000DECC82 /* pitch_tests */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -37,12 +38,13 @@
 		};
 		CD4C4E0518FBA87E008E0329 /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = /usr/share/man/man1/;
-			dstSubfolderSpec = 0;
+			buildActionMask = 12;
+			dstPath = "";
+			dstSubfolderSpec = 6;
 			files = (
+				CDCE460C18FBAB2300DECC82 /* pitch_tests in CopyFiles */,
 			);
-			runOnlyForDeploymentPostprocessing = 1;
+			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
 
@@ -65,6 +67,7 @@
 		CD0A82C418FBA9CB00145912 /* pitch_test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = pitch_test; sourceTree = BUILT_PRODUCTS_DIR; };
 		CD17F51B18FBA17A00A7FAC7 /* libportmidi.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libportmidi.dylib; path = /usr/local/Cellar/portmidi/217/lib/libportmidi.dylib; sourceTree = "<absolute>"; };
 		CD4C4E0A18FBA8C7008E0329 /* pitch_test.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pitch_test.c; sourceTree = "<group>"; };
+		CDCE460B18FBAB0000DECC82 /* pitch_tests */ = {isa = PBXFileReference; lastKnownFileType = folder; path = pitch_tests; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -101,6 +104,7 @@
 			children = (
 				CD4C4DF518FBA62E008E0329 /* Libraries */,
 				046F404618F5222D002BC68A /* Source */,
+				CDCE460B18FBAB0000DECC82 /* pitch_tests */,
 				CD0A82C518FBA9FD00145912 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -170,6 +174,7 @@
 			buildPhases = (
 				CD4C4DF818FBA87E008E0329 /* Sources */,
 				CD4C4DFC18FBA87E008E0329 /* Frameworks */,
+				CDCE460E18FBABD100DECC82 /* ShellScript */,
 				CD4C4E0518FBA87E008E0329 /* CopyFiles */,
 			);
 			buildRules = (
@@ -207,6 +212,22 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		CDCE460E18FBABD100DECC82 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "touch pitch_tests";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		046F404018F5222D002BC68A /* Sources */ = {
