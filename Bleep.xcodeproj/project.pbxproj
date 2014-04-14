@@ -17,7 +17,12 @@
 		046F406B18F52A43002BC68A /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 046F406718F52A43002BC68A /* IOKit.framework */; };
 		046F406C18F52A43002BC68A /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 046F406818F52A43002BC68A /* OpenGL.framework */; };
 		046F406E18F52A56002BC68A /* libportaudio.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 046F406D18F52A56002BC68A /* libportaudio.a */; };
+		CD0A82C318FBA9CB00145912 /* libsndfile.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CD0A82C218FBA9CB00145912 /* libsndfile.a */; };
 		CD17F51C18FBA17A00A7FAC7 /* libportmidi.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = CD17F51B18FBA17A00A7FAC7 /* libportmidi.dylib */; };
+		CD4C4DFD18FBA87E008E0329 /* libfftw3.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 046F406118F523E8002BC68A /* libfftw3.a */; };
+		CD4C4E0118FBA87E008E0329 /* libportaudio.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 046F406D18F52A56002BC68A /* libportaudio.a */; };
+		CD4C4E0B18FBA8C7008E0329 /* pitch_test.c in Sources */ = {isa = PBXBuildFile; fileRef = CD4C4E0A18FBA8C7008E0329 /* pitch_test.c */; };
+		CD4C4E0C18FBA904008E0329 /* pitch.c in Sources */ = {isa = PBXBuildFile; fileRef = 046F405618F52393002BC68A /* pitch.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -30,24 +35,36 @@
 			);
 			runOnlyForDeploymentPostprocessing = 1;
 		};
+		CD4C4E0518FBA87E008E0329 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		046F404418F5222D002BC68A /* Bleep */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Bleep; sourceTree = BUILT_PRODUCTS_DIR; };
 		046F405118F52393002BC68A /* combined.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = combined.c; sourceTree = "<group>"; };
 		046F405218F52393002BC68A /* pa_memorybarrier.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pa_memorybarrier.h; sourceTree = "<group>"; };
 		046F405318F52393002BC68A /* pa_ringbuffer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pa_ringbuffer.c; sourceTree = "<group>"; };
 		046F405418F52393002BC68A /* pa_ringbuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pa_ringbuffer.h; sourceTree = "<group>"; };
 		046F405618F52393002BC68A /* pitch.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pitch.c; sourceTree = "<group>"; };
 		046F405718F52393002BC68A /* pitch.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pitch.h; sourceTree = "<group>"; };
-		046F406118F523E8002BC68A /* libfftw3.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libfftw3.a; path = /usr/local/Cellar/fftw/3.3.3/lib/libfftw3.a; sourceTree = "<group>"; };
-		046F406318F529A9002BC68A /* libglfw3.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libglfw3.a; path = /usr/local/lib/libglfw3.a; sourceTree = "<group>"; };
+		046F406118F523E8002BC68A /* libfftw3.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libfftw3.a; path = /usr/local/Cellar/fftw/3.3.3/lib/libfftw3.a; sourceTree = "<absolute>"; };
+		046F406318F529A9002BC68A /* libglfw3.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libglfw3.a; path = /usr/local/lib/libglfw3.a; sourceTree = "<absolute>"; };
 		046F406518F52A43002BC68A /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = /System/Library/Frameworks/Cocoa.framework; sourceTree = "<absolute>"; };
-		046F406618F52A43002BC68A /* CoreVideo.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreVideo.framework; path = /System/Library/Frameworks/CoreVideo.framework; sourceTree = "<group>"; };
-		046F406718F52A43002BC68A /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = /System/Library/Frameworks/IOKit.framework; sourceTree = "<group>"; };
-		046F406818F52A43002BC68A /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = /System/Library/Frameworks/OpenGL.framework; sourceTree = "<group>"; };
-		046F406D18F52A56002BC68A /* libportaudio.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libportaudio.a; path = /usr/local/Cellar/portaudio/19.20111121/lib/libportaudio.a; sourceTree = "<group>"; };
-		CD17F51B18FBA17A00A7FAC7 /* libportmidi.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libportmidi.dylib; path = ../../../../usr/local/Cellar/portmidi/217/lib/libportmidi.dylib; sourceTree = "<group>"; };
+		046F406618F52A43002BC68A /* CoreVideo.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreVideo.framework; path = /System/Library/Frameworks/CoreVideo.framework; sourceTree = "<absolute>"; };
+		046F406718F52A43002BC68A /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = /System/Library/Frameworks/IOKit.framework; sourceTree = "<absolute>"; };
+		046F406818F52A43002BC68A /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = /System/Library/Frameworks/OpenGL.framework; sourceTree = "<absolute>"; };
+		046F406D18F52A56002BC68A /* libportaudio.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libportaudio.a; path = /usr/local/Cellar/portaudio/19.20111121/lib/libportaudio.a; sourceTree = "<absolute>"; };
+		CD0A82C018FBA93600145912 /* bleep */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = bleep; sourceTree = BUILT_PRODUCTS_DIR; };
+		CD0A82C218FBA9CB00145912 /* libsndfile.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libsndfile.a; path = ../../../../usr/local/Cellar/libsndfile/1.0.25/lib/libsndfile.a; sourceTree = "<group>"; };
+		CD0A82C418FBA9CB00145912 /* pitch_test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = pitch_test; sourceTree = BUILT_PRODUCTS_DIR; };
+		CD17F51B18FBA17A00A7FAC7 /* libportmidi.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libportmidi.dylib; path = /usr/local/Cellar/portmidi/217/lib/libportmidi.dylib; sourceTree = "<absolute>"; };
+		CD4C4E0A18FBA8C7008E0329 /* pitch_test.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pitch_test.c; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -66,31 +83,26 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		CD4C4DFC18FBA87E008E0329 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CD0A82C318FBA9CB00145912 /* libsndfile.a in Frameworks */,
+				CD4C4DFD18FBA87E008E0329 /* libfftw3.a in Frameworks */,
+				CD4C4E0118FBA87E008E0329 /* libportaudio.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		046F403B18F5222D002BC68A = {
 			isa = PBXGroup;
 			children = (
-				046F406518F52A43002BC68A /* Cocoa.framework */,
-				046F406618F52A43002BC68A /* CoreVideo.framework */,
-				046F406718F52A43002BC68A /* IOKit.framework */,
-				046F406818F52A43002BC68A /* OpenGL.framework */,
-				046F406118F523E8002BC68A /* libfftw3.a */,
-				046F406318F529A9002BC68A /* libglfw3.a */,
-				046F406D18F52A56002BC68A /* libportaudio.a */,
-				CD17F51B18FBA17A00A7FAC7 /* libportmidi.dylib */,
+				CD4C4DF518FBA62E008E0329 /* Libraries */,
 				046F404618F5222D002BC68A /* Source */,
-				046F404518F5222D002BC68A /* Products */,
+				CD0A82C518FBA9FD00145912 /* Products */,
 			);
-			sourceTree = "<group>";
-		};
-		046F404518F5222D002BC68A /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				046F404418F5222D002BC68A /* Bleep */,
-			);
-			name = Products;
 			sourceTree = "<group>";
 		};
 		046F404618F5222D002BC68A /* Source */ = {
@@ -102,16 +114,42 @@
 				046F405418F52393002BC68A /* pa_ringbuffer.h */,
 				046F405618F52393002BC68A /* pitch.c */,
 				046F405718F52393002BC68A /* pitch.h */,
+				CD4C4E0A18FBA8C7008E0329 /* pitch_test.c */,
 			);
 			name = Source;
+			sourceTree = "<group>";
+		};
+		CD0A82C518FBA9FD00145912 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				CD0A82C018FBA93600145912 /* bleep */,
+				CD0A82C418FBA9CB00145912 /* pitch_test */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CD4C4DF518FBA62E008E0329 /* Libraries */ = {
+			isa = PBXGroup;
+			children = (
+				046F406518F52A43002BC68A /* Cocoa.framework */,
+				046F406618F52A43002BC68A /* CoreVideo.framework */,
+				046F406718F52A43002BC68A /* IOKit.framework */,
+				046F406818F52A43002BC68A /* OpenGL.framework */,
+				046F406118F523E8002BC68A /* libfftw3.a */,
+				046F406318F529A9002BC68A /* libglfw3.a */,
+				046F406D18F52A56002BC68A /* libportaudio.a */,
+				CD17F51B18FBA17A00A7FAC7 /* libportmidi.dylib */,
+				CD0A82C218FBA9CB00145912 /* libsndfile.a */,
+			);
+			name = Libraries;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		046F404318F5222D002BC68A /* Bleep */ = {
+		046F404318F5222D002BC68A /* bleep */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 046F404D18F5222D002BC68A /* Build configuration list for PBXNativeTarget "Bleep" */;
+			buildConfigurationList = 046F404D18F5222D002BC68A /* Build configuration list for PBXNativeTarget "bleep" */;
 			buildPhases = (
 				046F404018F5222D002BC68A /* Sources */,
 				046F404118F5222D002BC68A /* Frameworks */,
@@ -121,9 +159,26 @@
 			);
 			dependencies = (
 			);
-			name = Bleep;
+			name = bleep;
 			productName = Bleep;
-			productReference = 046F404418F5222D002BC68A /* Bleep */;
+			productReference = CD0A82C018FBA93600145912 /* bleep */;
+			productType = "com.apple.product-type.tool";
+		};
+		CD4C4DF718FBA87E008E0329 /* pitch_test */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CD4C4E0618FBA87E008E0329 /* Build configuration list for PBXNativeTarget "pitch_test" */;
+			buildPhases = (
+				CD4C4DF818FBA87E008E0329 /* Sources */,
+				CD4C4DFC18FBA87E008E0329 /* Frameworks */,
+				CD4C4E0518FBA87E008E0329 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = pitch_test;
+			productName = Bleep;
+			productReference = CD0A82C418FBA9CB00145912 /* pitch_test */;
 			productType = "com.apple.product-type.tool";
 		};
 /* End PBXNativeTarget section */
@@ -143,11 +198,12 @@
 				en,
 			);
 			mainGroup = 046F403B18F5222D002BC68A;
-			productRefGroup = 046F404518F5222D002BC68A /* Products */;
+			productRefGroup = 046F403B18F5222D002BC68A;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				046F404318F5222D002BC68A /* Bleep */,
+				046F404318F5222D002BC68A /* bleep */,
+				CD4C4DF718FBA87E008E0329 /* pitch_test */,
 			);
 		};
 /* End PBXProject section */
@@ -160,6 +216,15 @@
 				046F405D18F52393002BC68A /* pitch.c in Sources */,
 				046F405B18F52393002BC68A /* pa_ringbuffer.c in Sources */,
 				046F405A18F52393002BC68A /* combined.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CD4C4DF818FBA87E008E0329 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CD4C4E0C18FBA904008E0329 /* pitch.c in Sources */,
+				CD4C4E0B18FBA8C7008E0329 /* pitch_test.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -266,6 +331,38 @@
 			};
 			name = Release;
 		};
+		CD4C4E0718FBA87E008E0329 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					/usr/local/lib,
+					/usr/local/Cellar/fftw/3.3.3/lib,
+					/usr/local/Cellar/portaudio/19.20111121/lib,
+					/usr/local/Cellar/portmidi/217/lib,
+					/usr/local/Cellar/libsndfile/1.0.25/lib,
+				);
+				OTHER_CFLAGS = "-I/usr/local/include";
+				PRODUCT_NAME = pitch_test;
+			};
+			name = Debug;
+		};
+		CD4C4E0818FBA87E008E0329 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					/usr/local/lib,
+					/usr/local/Cellar/fftw/3.3.3/lib,
+					/usr/local/Cellar/portaudio/19.20111121/lib,
+					/usr/local/Cellar/portmidi/217/lib,
+					/usr/local/Cellar/libsndfile/1.0.25/lib,
+				);
+				OTHER_CFLAGS = "-I/usr/local/include";
+				PRODUCT_NAME = pitch_test;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -278,11 +375,20 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		046F404D18F5222D002BC68A /* Build configuration list for PBXNativeTarget "Bleep" */ = {
+		046F404D18F5222D002BC68A /* Build configuration list for PBXNativeTarget "bleep" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				046F404E18F5222D002BC68A /* Debug */,
 				046F404F18F5222D002BC68A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		CD4C4E0618FBA87E008E0329 /* Build configuration list for PBXNativeTarget "pitch_test" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CD4C4E0718FBA87E008E0329 /* Debug */,
+				CD4C4E0818FBA87E008E0329 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
