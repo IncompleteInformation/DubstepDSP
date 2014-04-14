@@ -27,8 +27,9 @@ brew install portmidi
 
 - **FFTW:** http://www.fftw.org
 - **GLFW:** http://www.glfw.org
-- **libsndfile:** http://www.mega-nerd.com/libsndfile/
+- **libsndfile:** http://www.mega-nerd.com/libsndfile
 - **PortAudio:** http://www.portaudio.com
+- **PortMidi:** http://portmedia.sourceforge.net/portmidi
 
 ## Building
 
