@@ -1,9 +1,9 @@
-audio
-combined
-pitch_test
-video
-glfw*
+/a.out
+/bleep
+/midi_test
+/pitch_test
+/glfw*
+
 xcuserdata
 *.xcworkspacedata
 *.xccheckout
-a.out

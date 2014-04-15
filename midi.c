@@ -26,7 +26,7 @@ void midi_cleanup ()
     for (size_t i = 0; i < BUFFER_CAPACITY; ++i) buffer[i].timestamp = 0;
 }
 
-int midi_write (long message)
+int midi_write (int message)
 {
     if (buffer_size >= BUFFER_CAPACITY) return 1;
     buffer[buffer_size].message = message;
@@ -36,6 +36,6 @@ int midi_write (long message)
 
 void midi_flush ()
 {
-    Pm_Write(stream, buffer, buffer_size);
+    Pm_Write(stream, buffer, (int)buffer_size);
     buffer_size = 0;
 }

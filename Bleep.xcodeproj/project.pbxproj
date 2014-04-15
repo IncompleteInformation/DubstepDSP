@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		046F405A18F52393002BC68A /* bleep.c in Sources */ = {isa = PBXBuildFile; fileRef = 046F405118F52393002BC68A /* bleep.c */; };
+		046F405A18F52393002BC68A /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 046F405118F52393002BC68A /* main.c */; };
 		046F405D18F52393002BC68A /* pitch.c in Sources */ = {isa = PBXBuildFile; fileRef = 046F405618F52393002BC68A /* pitch.c */; };
 		046F406218F523E8002BC68A /* libfftw3.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 046F406118F523E8002BC68A /* libfftw3.a */; };
 		046F406418F529A9002BC68A /* libglfw3.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 046F406318F529A9002BC68A /* libglfw3.a */; };
@@ -22,6 +22,11 @@
 		CD4C4E0118FBA87E008E0329 /* libportaudio.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 046F406D18F52A56002BC68A /* libportaudio.a */; };
 		CD4C4E0B18FBA8C7008E0329 /* pitch_test.c in Sources */ = {isa = PBXBuildFile; fileRef = CD4C4E0A18FBA8C7008E0329 /* pitch_test.c */; };
 		CD4C4E0C18FBA904008E0329 /* pitch.c in Sources */ = {isa = PBXBuildFile; fileRef = 046F405618F52393002BC68A /* pitch.c */; };
+		CDB29B7218FCEB8300A5FFB7 /* pitch_tests in CopyFiles */ = {isa = PBXBuildFile; fileRef = CDCE460B18FBAB0000DECC82 /* pitch_tests */; };
+		CDB29B7818FCEBC300A5FFB7 /* midi_test.c in Sources */ = {isa = PBXBuildFile; fileRef = CDB29B7718FCEBC300A5FFB7 /* midi_test.c */; };
+		CDB29B7918FCEBC800A5FFB7 /* midi.c in Sources */ = {isa = PBXBuildFile; fileRef = CDB29B6518FCEB7100A5FFB7 /* midi.c */; };
+		CDB29B7A18FCEBCE00A5FFB7 /* midi.c in Sources */ = {isa = PBXBuildFile; fileRef = CDB29B6518FCEB7100A5FFB7 /* midi.c */; };
+		CDB29B7B18FCEC2900A5FFB7 /* libportmidi.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = CD17F51B18FBA17A00A7FAC7 /* libportmidi.dylib */; };
 		CDCE460C18FBAB2300DECC82 /* pitch_tests in CopyFiles */ = {isa = PBXBuildFile; fileRef = CDCE460B18FBAB0000DECC82 /* pitch_tests */; };
 /* End PBXBuildFile section */
 
@@ -45,10 +50,20 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		CDB29B7118FCEB8300A5FFB7 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 12;
+			dstPath = "";
+			dstSubfolderSpec = 6;
+			files = (
+				CDB29B7218FCEB8300A5FFB7 /* pitch_tests in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		046F405118F52393002BC68A /* bleep.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = bleep.c; sourceTree = "<group>"; };
+		046F405118F52393002BC68A /* main.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = main.c; sourceTree = "<group>"; };
 		046F405618F52393002BC68A /* pitch.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pitch.c; sourceTree = "<group>"; };
 		046F405718F52393002BC68A /* pitch.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pitch.h; sourceTree = "<group>"; };
 		046F406118F523E8002BC68A /* libfftw3.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libfftw3.a; path = /usr/local/Cellar/fftw/3.3.3/lib/libfftw3.a; sourceTree = "<absolute>"; };
@@ -58,11 +73,16 @@
 		046F406718F52A43002BC68A /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = /System/Library/Frameworks/IOKit.framework; sourceTree = "<absolute>"; };
 		046F406818F52A43002BC68A /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = /System/Library/Frameworks/OpenGL.framework; sourceTree = "<absolute>"; };
 		046F406D18F52A56002BC68A /* libportaudio.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libportaudio.a; path = /usr/local/Cellar/portaudio/19.20111121/lib/libportaudio.a; sourceTree = "<absolute>"; };
-		CD0A82C018FBA93600145912 /* bleep */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = bleep; sourceTree = BUILT_PRODUCTS_DIR; };
-		CD0A82C218FBA9CB00145912 /* libsndfile.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libsndfile.a; path = ../../../../usr/local/Cellar/libsndfile/1.0.25/lib/libsndfile.a; sourceTree = "<group>"; };
-		CD0A82C418FBA9CB00145912 /* pitch_test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = pitch_test; sourceTree = BUILT_PRODUCTS_DIR; };
+		CD0A82C218FBA9CB00145912 /* libsndfile.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libsndfile.a; path = /Users/Calder/Developer/Bleep/../../../../usr/local/Cellar/libsndfile/1.0.25/lib/libsndfile.a; sourceTree = "<absolute>"; };
 		CD17F51B18FBA17A00A7FAC7 /* libportmidi.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libportmidi.dylib; path = /usr/local/Cellar/portmidi/217/lib/libportmidi.dylib; sourceTree = "<absolute>"; };
 		CD4C4E0A18FBA8C7008E0329 /* pitch_test.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pitch_test.c; sourceTree = "<group>"; };
+		CD886B5218FCEC84003F5FED /* bleep */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = bleep; sourceTree = BUILT_PRODUCTS_DIR; };
+		CD886B5318FCEC84003F5FED /* pitch_test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = pitch_test; sourceTree = BUILT_PRODUCTS_DIR; };
+		CD886B5418FCEC84003F5FED /* midi_test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = midi_test; sourceTree = BUILT_PRODUCTS_DIR; };
+		CDB29B6518FCEB7100A5FFB7 /* midi.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = midi.c; sourceTree = "<group>"; };
+		CDB29B6618FCEB7100A5FFB7 /* midi.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = midi.h; sourceTree = "<group>"; };
+		CDB29B6718FCEB7100A5FFB7 /* pitch_test.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = pitch_test.c; sourceTree = "<group>"; };
+		CDB29B7718FCEBC300A5FFB7 /* midi_test.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = midi_test.c; sourceTree = "<group>"; };
 		CDCE460B18FBAB0000DECC82 /* pitch_tests */ = {isa = PBXFileReference; lastKnownFileType = folder; path = pitch_tests; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -92,37 +112,42 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		CDB29B6C18FCEB8300A5FFB7 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CDB29B7B18FCEC2900A5FFB7 /* libportmidi.dylib in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		046F403B18F5222D002BC68A = {
 			isa = PBXGroup;
 			children = (
+				CD886B5218FCEC84003F5FED /* bleep */,
+				CD886B5318FCEC84003F5FED /* pitch_test */,
+				CD886B5418FCEC84003F5FED /* midi_test */,
 				CD4C4DF518FBA62E008E0329 /* Libraries */,
 				046F404618F5222D002BC68A /* Source */,
 				CDCE460B18FBAB0000DECC82 /* pitch_tests */,
-				CD0A82C518FBA9FD00145912 /* Products */,
 			);
 			sourceTree = "<group>";
 		};
 		046F404618F5222D002BC68A /* Source */ = {
 			isa = PBXGroup;
 			children = (
-				046F405118F52393002BC68A /* bleep.c */,
+				046F405118F52393002BC68A /* main.c */,
+				CDB29B7718FCEBC300A5FFB7 /* midi_test.c */,
+				CDB29B6518FCEB7100A5FFB7 /* midi.c */,
+				CDB29B6618FCEB7100A5FFB7 /* midi.h */,
+				CDB29B6718FCEB7100A5FFB7 /* pitch_test.c */,
 				046F405618F52393002BC68A /* pitch.c */,
 				046F405718F52393002BC68A /* pitch.h */,
 				CD4C4E0A18FBA8C7008E0329 /* pitch_test.c */,
 			);
 			name = Source;
-			sourceTree = "<group>";
-		};
-		CD0A82C518FBA9FD00145912 /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				CD0A82C018FBA93600145912 /* bleep */,
-				CD0A82C418FBA9CB00145912 /* pitch_test */,
-			);
-			name = Products;
 			sourceTree = "<group>";
 		};
 		CD4C4DF518FBA62E008E0329 /* Libraries */ = {
@@ -158,7 +183,7 @@
 			);
 			name = bleep;
 			productName = Bleep;
-			productReference = CD0A82C018FBA93600145912 /* bleep */;
+			productReference = CD886B5218FCEC84003F5FED /* bleep */;
 			productType = "com.apple.product-type.tool";
 		};
 		CD4C4DF718FBA87E008E0329 /* pitch_test */ = {
@@ -176,7 +201,25 @@
 			);
 			name = pitch_test;
 			productName = Bleep;
-			productReference = CD0A82C418FBA9CB00145912 /* pitch_test */;
+			productReference = CD886B5318FCEC84003F5FED /* pitch_test */;
+			productType = "com.apple.product-type.tool";
+		};
+		CDB29B6818FCEB8300A5FFB7 /* midi_test */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CDB29B7318FCEB8300A5FFB7 /* Build configuration list for PBXNativeTarget "midi_test" */;
+			buildPhases = (
+				CDB29B6918FCEB8300A5FFB7 /* Sources */,
+				CDB29B6C18FCEB8300A5FFB7 /* Frameworks */,
+				CDB29B7018FCEB8300A5FFB7 /* ShellScript */,
+				CDB29B7118FCEB8300A5FFB7 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = midi_test;
+			productName = Bleep;
+			productReference = CD886B5418FCEC84003F5FED /* midi_test */;
 			productType = "com.apple.product-type.tool";
 		};
 /* End PBXNativeTarget section */
@@ -202,11 +245,25 @@
 			targets = (
 				046F404318F5222D002BC68A /* bleep */,
 				CD4C4DF718FBA87E008E0329 /* pitch_test */,
+				CDB29B6818FCEB8300A5FFB7 /* midi_test */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXShellScriptBuildPhase section */
+		CDB29B7018FCEB8300A5FFB7 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "touch pitch_tests";
+		};
 		CDCE460E18FBABD100DECC82 /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -227,8 +284,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CDB29B7A18FCEBCE00A5FFB7 /* midi.c in Sources */,
 				046F405D18F52393002BC68A /* pitch.c in Sources */,
-				046F405A18F52393002BC68A /* bleep.c in Sources */,
+				046F405A18F52393002BC68A /* main.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -238,6 +296,15 @@
 			files = (
 				CD4C4E0C18FBA904008E0329 /* pitch.c in Sources */,
 				CD4C4E0B18FBA8C7008E0329 /* pitch_test.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CDB29B6918FCEB8300A5FFB7 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CDB29B7918FCEBC800A5FFB7 /* midi.c in Sources */,
+				CDB29B7818FCEBC300A5FFB7 /* midi_test.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -376,6 +443,38 @@
 			};
 			name = Release;
 		};
+		CDB29B7418FCEB8300A5FFB7 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					/usr/local/lib,
+					/usr/local/Cellar/fftw/3.3.3/lib,
+					/usr/local/Cellar/portaudio/19.20111121/lib,
+					/usr/local/Cellar/portmidi/217/lib,
+					/usr/local/Cellar/libsndfile/1.0.25/lib,
+				);
+				OTHER_CFLAGS = "-I/usr/local/include";
+				PRODUCT_NAME = midi_test;
+			};
+			name = Debug;
+		};
+		CDB29B7518FCEB8300A5FFB7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					/usr/local/lib,
+					/usr/local/Cellar/fftw/3.3.3/lib,
+					/usr/local/Cellar/portaudio/19.20111121/lib,
+					/usr/local/Cellar/portmidi/217/lib,
+					/usr/local/Cellar/libsndfile/1.0.25/lib,
+				);
+				OTHER_CFLAGS = "-I/usr/local/include";
+				PRODUCT_NAME = midi_test;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -402,6 +501,15 @@
 			buildConfigurations = (
 				CD4C4E0718FBA87E008E0329 /* Debug */,
 				CD4C4E0818FBA87E008E0329 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		CDB29B7318FCEB8300A5FFB7 /* Build configuration list for PBXNativeTarget "midi_test" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CDB29B7418FCEB8300A5FFB7 /* Debug */,
+				CDB29B7518FCEB8300A5FFB7 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

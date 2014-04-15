@@ -33,7 +33,7 @@ brew install portmidi
 
 ## Running
 
-First install and start a MIDI synthesizer. Then:
+First install and start a MIDI synthesizer (like [SimpleSynth](http://notahat.com/simplesynth/)). Then:
 ```
 make
 ```
