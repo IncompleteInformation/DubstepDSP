@@ -102,7 +102,7 @@ static void update_fft_buffer(float mic_bit, UserData* ud)
             ud->average_amplitude = calc_avg_amplitude(ud->fft_mag, FFT_SIZE, SAMPLE_RATE, 0, FFT_SIZE/2);
             ud->spectral_crest = 0; //calc_spectral_crest(ud->fft_mag, FFT_SIZE, SAMPLE_RATE);
             ud->spectral_flatness = 0; //calc_spectral_flatness(ud->fft_mag, FFT_SIZE, SAMPLE_RATE, 0, SAMPLE_RATE/2);
-            ud->harmonic_average = 0; //calc_harmonics(ud->fft, ud->fft_mag, FFT_SIZE, SAMPLE_RATE); //useless and computationally intensive
+            ud->harmonic_average = calc_harmonics(ud->fft, ud->fft_mag, FFT_SIZE, SAMPLE_RATE); //useless and computationally intensive
             
             //onset fft settings and calculations
             
@@ -298,7 +298,7 @@ int main (void)
 //        printf("low_passed_dom_freq : %f\n", ud.dominant_frequency_lp);
 //        printf("first 8 bins: %06.2f %06.2f %06.2f %06.2f %06.2f %06.2f %06.2f %06.2f\n", ud.fft_mag[0], ud.fft_mag[1], ud.fft_mag[2], ud.fft_mag[3], ud.fft_mag[4], ud.fft_mag[5], ud.fft_mag[6], ud.fft_mag[7]);
 //        printf("onset amplitude: %f\n",ud.onset_average_amplitude);
-//        printf("harmonic average vs. lp_pitch: %f %f\n", ud.harmonic_average, ud.dominant_frequency_lp);
+        printf("harmonic average vs. lp_pitch: %f %f\n", ud.harmonic_average, ud.dominant_frequency_lp);
         
         //MIDI OUT STATEMENTS
         if (ud.onset_average_amplitude>.01){
@@ -319,7 +319,7 @@ int main (void)
             
             PmEvent buf[2];
             buf[0].timestamp = 0; buf[1].timestamp = 0;
-            buf[0].message = Pm_Message(0xB0, 21, outputCentroid);
+            buf[0].message = Pm_Message(0xB0, 1, outputCentroid);
             buf[1].message = Pm_Message(0xE0, lsb_7, msb_7);
             Pm_Write(midi, buf, 2);
 

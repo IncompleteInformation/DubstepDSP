@@ -222,7 +222,7 @@ double calc_harmonics(fftw_complex* fft, double* fft_mag, size_t sample_size, do
     int    num_harmonics_seen = 0;
     for (size_t i = 0; i<sample_size/2+1; ++i)
     {
-        if ((harmonics[i]>200)&&(harmonics[i]<5000))
+        if ((harmonics[i]>100)&&(harmonics[i]<500))
         {
             if (prev_harmonic==0) {
                 prev_harmonic = harmonics[i];
