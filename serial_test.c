@@ -3,11 +3,13 @@
 
 int main (void)
 {
-    serial_setup();
+    int serfail;
+    serfail = serial_setup();
+    if (!serfail) return 0;
     
     int len;
     int out[32];
-    for (int i = 0; i<1000000000; ++i)
+    for (int i = 0; i<10000000; ++i)
     {
         len = serial_poll(out);
         for (int j = 0; j<len; ++j)
@@ -17,5 +19,5 @@ int main (void)
         printf("\n");
     }
     serial_close();
-    return 0;
+    return 1;
 }

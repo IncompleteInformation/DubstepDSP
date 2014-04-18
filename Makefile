@@ -31,8 +31,6 @@ pitch_test: pitch
 
 serial: serial.c serial.h serial_test.c
 	@cc serial_test.c serial.c -o serial_test \
-		-lfftw3 \
-		-lsndfile
 
 serial_test: serial
 	@./serial_test

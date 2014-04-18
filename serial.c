@@ -19,10 +19,8 @@ char buf[31];
 
 int serial_setup()
 {
-
-    
     fd = open(MODEMDEVICE, O_RDWR | O_NOCTTY );
-    if (fd <0) {perror(MODEMDEVICE); return 0; exit(-1); }
+    if (fd <0) {perror(MODEMDEVICE); return 0; }
     
     tcgetattr(fd,&oldtio); /* save current port settings */
     
