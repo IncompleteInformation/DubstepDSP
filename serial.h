@@ -11,13 +11,13 @@
 #define MODEMDEVICE "/dev/tty.linvor-DevB"
 #define _POSIX_SOURCE 1 /* POSIX compliant source */
 
-//sets up midi connection
-int serial_setup();
+// Set up serial connection
+int serial_setup ();
 
-//polls for data
-//output: list to be populated with stuff
-//returns length of output
-int serial_poll(int *output);
+// Read data from serial device
+// Return the number of bytes read.
+//   output: the buffer to be populated with data (TODO: what length???)
+int serial_poll (int* output);
 
-//shut down connection
-void serial_close();
+// Shut down serial connection
+void serial_close ();
