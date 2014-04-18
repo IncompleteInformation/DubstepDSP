@@ -12,7 +12,7 @@
 #define _POSIX_SOURCE 1 /* POSIX compliant source */
 
 //sets up midi connection
-int serial_setup();
+int serial_init();
 
 //polls for data
 //output: list to be populated with stuff

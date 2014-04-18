@@ -34,6 +34,13 @@ int midi_write (int message)
     return 0;
 }
 
+void midi_NOFF ()
+{
+    midi_write(Pm_Message(0x80, 54, 0));
+    midi_write(Pm_Message(0x81, 54, 0));
+    midi_write(Pm_Message(0x82, 54, 0));
+    midi_write(Pm_Message(0x83, 54, 0));
+}
 void midi_flush ()
 {
     Pm_Write(stream, buffer, (int)buffer_size);

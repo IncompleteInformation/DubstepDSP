@@ -1,5 +1,6 @@
 #include "pitch.h"
 #include "midi.h"
+#include "serial.h"
 
 // #define GLFW_INCLUDE_GLCOREARB
 #include <stdlib.h>
@@ -17,6 +18,7 @@
 #define FFT_SIZE (1024) //512 = 11ms delay, 86Hz bins
 #define ONSET_FFT_SIZE (64)
 #define BIN_SIZE ((double) SAMPLE_RATE/FFT_SIZE)
+#define ONSET_THRESHOLD (.05)
 
 //PmStream* midi;
 
@@ -85,7 +87,7 @@ static void update_fft_buffer(float mic_bit, UserData* ud)
             ud->onset_average_amplitude = calc_avg_amplitude(ud->onset_fft_mag, ONSET_FFT_SIZE, SAMPLE_RATE, 0, SAMPLE_RATE/2);
         }
     //stall calculations of large ffts until onset is detected. This will currently cancel the last 25ms of a transform that with p>.5, should happen. IDC right now. Mechanism is to reset fft_buffer_loc back to the beginning.
-    if (ud->onset_average_amplitude<.001) ud->fft_buffer_loc = 0;
+    if (ud->onset_average_amplitude<ONSET_THRESHOLD) ud->fft_buffer_loc = 0;
     ud->fft_buffer[ud->fft_buffer_loc] = mic_bit;
     ++ud->fft_buffer_loc;
     if (ud->fft_buffer_loc==FFT_SIZE)
@@ -146,7 +148,16 @@ int main (void)
     ud.onset_fft_buffer_loc = 0;
     ud.onset_triggered = 0;
     
+    // Initialize PortMidi
     midi_init();
+    
+    // Initialize RS-232 connection to glove
+    int ser_live;
+    int ser_buf[32];
+    int ser_buf_loc;
+    int midi_channel = 0;
+    int angle = 0; //the glove is held at an angle, since serial commands come in in pairs, we need to pick just one.
+    ser_live = serial_init();
 
 //    // Initialize PortMidi
 //    Pm_OpenOutput(&midi,
@@ -303,11 +314,29 @@ int main (void)
 //        printf("onset amplitude: %f\n",ud.onset_average_amplitude);
         printf("harmonic average vs. lp_pitch: %f %f\n", ud.harmonic_average, ud.dominant_frequency_lp);
         
+        //SERIAL DATA HANDLING
+        if (ser_live)
+        {
+            ser_buf_loc = serial_poll(ser_buf);
+            for (int i=0; i<ser_buf_loc; ++i)
+            {
+                if (ser_buf[i]<0)
+                {
+                    if (midi_channel!=ser_buf[i]+128)
+                    {
+                        midi_channel = ser_buf[i]+128;
+                        midi_NOFF(); // clear all notes
+                        note_on = 0;
+                    }
+                }
+                else angle = ser_buf[i];
+            }
+        }
         //MIDI OUT STATEMENTS
-        if (ud.onset_average_amplitude>.05){
+        if (ud.onset_average_amplitude>ONSET_THRESHOLD){
             if (!note_on)
             {
-                midi_write(Pm_Message(0x90, 54, 100/*(int)ud.average_amplitude*/));
+                midi_write(Pm_Message(0x90|midi_channel, 54, 100/*(int)ud.average_amplitude*/));
                 note_on = 1;
             }
             //0x2000 is 185 hz, 0x0000 is 73.416, 0x3fff is 466.16
@@ -322,12 +351,13 @@ int main (void)
             if (outputCentroid > 127) outputCentroid = 127;
             if (outputCentroid < 000) outputCentroid = 000;
             
-            midi_write(Pm_Message(0xB0, 1, outputCentroid));
-            midi_write(Pm_Message(0xE0, lsb_7, msb_7));
+            if (ser_live) midi_write(Pm_Message(0xB0|midi_channel, 0, angle));
+            midi_write(Pm_Message(0xB0|midi_channel, 1, outputCentroid));
+            midi_write(Pm_Message(0xE0|midi_channel, lsb_7, msb_7));
         }
         else{
             if (note_on) {
-                midi_write(Pm_Message(0x80, 54, 100));
+                midi_write(Pm_Message(0x80|midi_channel, 54, 100));
                 note_on = 0;
             }
         }

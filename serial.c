@@ -17,7 +17,7 @@ int fd,c, res;
 struct termios oldtio,newtio;
 char buf[31];
 
-int serial_setup()
+int serial_init()
 {
     fd = open(MODEMDEVICE, O_RDWR | O_NOCTTY );
     if (fd <0) {perror(MODEMDEVICE); return 0; }

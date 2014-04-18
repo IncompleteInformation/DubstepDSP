@@ -3,21 +3,26 @@
 
 int main (void)
 {
-    int serfail;
-    serfail = serial_setup();
-    if (!serfail) return 0;
+    int ser_live;
+    ser_live = serial_init();
+    //if (!serfail) return 0;
     
     int len;
     int out[32];
-    for (int i = 0; i<10000000; ++i)
+    if (ser_live)
     {
-        len = serial_poll(out);
-        for (int j = 0; j<len; ++j)
+        for (int i = 0; i<10000000; ++i)
         {
-            printf("%i:", out[j]);
+            len = serial_poll(out);
+            for (int j = 0; j<len; ++j)
+            {
+                printf("%i:", out[j]);
+            }
+            printf("\n");
         }
-        printf("\n");
+        
+        serial_close();
     }
-    serial_close();
+    printf("casual continue\n");
     return 1;
 }
