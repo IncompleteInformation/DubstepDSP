@@ -1,4 +1,5 @@
 #include "pitch.h"
+#include "midi.h"
 
 // #define GLFW_INCLUDE_GLCOREARB
 #include <stdlib.h>
@@ -17,7 +18,7 @@
 #define ONSET_FFT_SIZE (64)
 #define BIN_SIZE ((double) SAMPLE_RATE/FFT_SIZE)
 
-PmStream* midi;
+//PmStream* midi;
 
 typedef struct{
     float data[BUFFER_SIZE];
@@ -144,15 +145,17 @@ int main (void)
     ud.fft_buffer_loc = 0;
     ud.onset_fft_buffer_loc = 0;
     ud.onset_triggered = 0;
+    
+    midi_init();
 
-    // Initialize PortMidi
-    Pm_OpenOutput(&midi,
-                  Pm_GetDefaultOutputDeviceID(), // Output device
-                  NULL,                          // Scoooby Dooby Doooh
-                  0,                             // Useless buffer size
-                  NULL,                          // ???
-                  NULL,                          // Myyysterious
-                  0);                            // Latency
+//    // Initialize PortMidi
+//    Pm_OpenOutput(&midi,
+//                  Pm_GetDefaultOutputDeviceID(), // Output device
+//                  NULL,                          // Scoooby Dooby Doooh
+//                  0,                             // Useless buffer size
+//                  NULL,                          // ???
+//                  NULL,                          // Myyysterious
+//                  0);                            // Latency
 
     // Initialize PortAudio
     paCheckError(Pa_Initialize());
@@ -301,37 +304,34 @@ int main (void)
         printf("harmonic average vs. lp_pitch: %f %f\n", ud.harmonic_average, ud.dominant_frequency_lp);
         
         //MIDI OUT STATEMENTS
-        if (ud.onset_average_amplitude>.01){
+        if (ud.onset_average_amplitude>.05){
             if (!note_on)
             {
-                Pm_WriteShort(midi, 0, Pm_Message(0x90, 54, 100/*(int)ud.average_amplitude*/));
+                midi_write(Pm_Message(0x90, 54, 100/*(int)ud.average_amplitude*/));
                 note_on = 1;
             }
             //0x2000 is 185 hz, 0x0000 is 73.416, 0x3fff is 466.16
             double midiNumber = 12 * log2(ud.dominant_frequency_lp/440) + 69;
             //0x0000 is 38, 0x3fff is 70
             int outputPitch = (int)((midiNumber-38)/32*0x3FFF);
+            if (outputPitch > 0x3FFF) outputPitch = 0x3FFF;
+            if (outputPitch < 0x0000) outputPitch = 0x0000;
             int lsb_7 = outputPitch&0x7F;
             int msb_7 = (outputPitch>>7)&0x7F;
-            int outputCentroid = (int)((ud.spectral_centroid-400)/600*127);
-//            Pm_WriteShort(midi, 0, Pm_Message(0xB0, 21, outputCentroid));
-//            Pm_WriteShort(midi, 0, Pm_Message(0xE0, lsb_7, msb_7));
+            int outputCentroid = (int)((ud.spectral_centroid-400)/400*127);
+            if (outputCentroid > 127) outputCentroid = 127;
+            if (outputCentroid < 000) outputCentroid = 000;
             
-            PmEvent buf[2];
-            buf[0].timestamp = 0; buf[1].timestamp = 0;
-            buf[0].message = Pm_Message(0xB0, 1, outputCentroid);
-            buf[1].message = Pm_Message(0xE0, lsb_7, msb_7);
-            Pm_Write(midi, buf, 2);
-
-            
-            
+            midi_write(Pm_Message(0xB0, 1, outputCentroid));
+            midi_write(Pm_Message(0xE0, lsb_7, msb_7));
         }
         else{
             if (note_on) {
-                Pm_WriteShort(midi, 0, Pm_Message(0x80, 54, 100));
+                midi_write(Pm_Message(0x80, 54, 100));
                 note_on = 0;
             }
         }
+        midi_flush();
     }
 
     // Shut down GLFW
@@ -344,9 +344,8 @@ int main (void)
     Pa_Terminate();
 
     // Shut down PortMidi
-    Pm_Close(midi);
-    Pm_Terminate();
-
+    midi_cleanup();
+    
     // Exit happily
     exit(EXIT_SUCCESS);
 }
