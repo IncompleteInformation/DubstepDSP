@@ -2,6 +2,7 @@
 /bleep
 /midi_test
 /pitch_test
+/serial_test
 /glfw*
 
 xcuserdata
