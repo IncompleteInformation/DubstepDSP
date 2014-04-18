@@ -40,7 +40,7 @@ int serial_init()
     return 1;
 }
 
-int serial_poll(int* output)
+int serial_poll (int* output)
 {
     res = read(fd,buf,31);   /* returns after 5 chars have been input */
     //printf(":");
@@ -53,7 +53,7 @@ int serial_poll(int* output)
     return res;
 }
 
-void serial_close()
+void serial_close ()
 {
     tcsetattr(fd,TCSANOW,&oldtio);
 }
