@@ -94,7 +94,7 @@ static void update_fft_buffer(float mic_bit, UserData* ud)
         {
             ud->fft_buffer_loc=0;
             double tmp[FFT_SIZE];
-            double tmp2[FFT_SIZE/2 + 1];
+//            double tmp2[FFT_SIZE/2 + 1];
             calc_fft(ud->fft_buffer, ud->fft, tmp, FFT_SIZE);
             calc_fft_mag(ud->fft, ud->fft_mag, FFT_SIZE);
             //calc_fft(ud->fft_mag, ud->fft_fft, tmp2, FFT_SIZE/2 +1);
