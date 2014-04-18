@@ -15,7 +15,8 @@
 
 int fd,c, res;
 struct termios oldtio,newtio;
-char buf[31];
+char buf[255];
+
 
 int serial_init()
 {
@@ -42,9 +43,9 @@ int serial_init()
 
 int serial_poll (int* output)
 {
-    res = read(fd,buf,31);   /* returns after 5 chars have been input */
+    res = read(fd,buf,255);   /* returns after 5 chars have been input */
     //printf(":");
-    for (uint i = 0; i<res; ++i)
+    for (int i = 0; i<res; ++i)
     {
         output[i] = buf[i];
         //printf("%i:", buf[i]);

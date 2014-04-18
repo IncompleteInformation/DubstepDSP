@@ -18,7 +18,7 @@
 #define FFT_SIZE (1024) //512 = 11ms delay, 86Hz bins
 #define ONSET_FFT_SIZE (64)
 #define BIN_SIZE ((double) SAMPLE_RATE/FFT_SIZE)
-#define ONSET_THRESHOLD (.05)
+#define ONSET_THRESHOLD (.025)
 
 //PmStream* midi;
 
@@ -159,15 +159,6 @@ int main (void)
     int angle = 0; //the glove is held at an angle, since serial commands come in in pairs, we need to pick just one.
     ser_live = serial_init();
 
-//    // Initialize PortMidi
-//    Pm_OpenOutput(&midi,
-//                  Pm_GetDefaultOutputDeviceID(), // Output device
-//                  NULL,                          // Scoooby Dooby Doooh
-//                  0,                             // Useless buffer size
-//                  NULL,                          // ???
-//                  NULL,                          // Myyysterious
-//                  0);                            // Latency
-
     // Initialize PortAudio
     paCheckError(Pa_Initialize());
 
@@ -306,14 +297,7 @@ int main (void)
         glfwSwapBuffers(window);
         glfwPollEvents();
         
-        //PRINT STATEMENTS
-//        printf("full_spectrum amplitude: %f\n", ud.average_amplitude);
-//        printf("full_spectrum_flatness: %f\n", ud.spectral_flatness);
-//        printf("low_passed_dom_freq : %f\n", ud.dominant_frequency_lp);
-//        printf("first 8 bins: %06.2f %06.2f %06.2f %06.2f %06.2f %06.2f %06.2f %06.2f\n", ud.fft_mag[0], ud.fft_mag[1], ud.fft_mag[2], ud.fft_mag[3], ud.fft_mag[4], ud.fft_mag[5], ud.fft_mag[6], ud.fft_mag[7]);
-//        printf("onset amplitude: %f\n",ud.onset_average_amplitude);
-        printf("harmonic average vs. lp_pitch: %f %f\n", ud.harmonic_average, ud.dominant_frequency_lp);
-        
+
         //SERIAL DATA HANDLING
         if (ser_live)
         {
@@ -351,8 +335,8 @@ int main (void)
             if (outputCentroid > 127) outputCentroid = 127;
             if (outputCentroid < 000) outputCentroid = 000;
             
-            if (ser_live) midi_write(Pm_Message(0xB0|midi_channel, 0, angle));
-            midi_write(Pm_Message(0xB0|midi_channel, 1, outputCentroid));
+            if (ser_live) midi_write(Pm_Message(0xB0/*|midi_channel*/, 0, angle));
+            midi_write(Pm_Message(0xB0/*|midi_channel*/, 1, outputCentroid));
             midi_write(Pm_Message(0xE0|midi_channel, lsb_7, msb_7));
         }
         else{
@@ -362,7 +346,22 @@ int main (void)
             }
         }
         midi_flush();
+        
+        
+        
+        //PRINT STATEMENTS
+        //        printf("full_spectrum amplitude: %f\n", ud.average_amplitude);
+        //        printf("full_spectrum_flatness: %f\n", ud.spectral_flatness);
+        //        printf("low_passed_dom_freq : %f\n", ud.dominant_frequency_lp);
+        //        printf("first 8 bins: %06.2f %06.2f %06.2f %06.2f %06.2f %06.2f %06.2f %06.2f\n", ud.fft_mag[0], ud.fft_mag[1], ud.fft_mag[2], ud.fft_mag[3], ud.fft_mag[4], ud.fft_mag[5], ud.fft_mag[6], ud.fft_mag[7]);
+        //        printf("onset amplitude: %f\n",ud.onset_average_amplitude);
+        //    printf("harmonic average vs. lp_pitch: %f %f\n", ud.harmonic_average, ud.dominant_frequency_lp);
+        printf("midi channel, angle: %i\t %i\n",midi_channel, angle);
     }
+    
+    
+
+    
 
     // Shut down GLFW
     glfwDestroyWindow(window);
