@@ -3,7 +3,7 @@
 
 int main (void)
 {
-    serial_init();
+    serial_setup();
     
     int len;
     int out[32];
