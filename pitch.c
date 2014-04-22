@@ -97,7 +97,7 @@ double dominant_freq_lp (fftw_complex* fft, double* fft_mag, size_t sample_size,
     {
         normalized[i] = fft_mag[i]/max;
     }
-    double ratio = .125;
+    double ratio = .0625;
     for (size_t i = 1; i<num_bins; ++i)
     {
         if ((normalized[i]>normalized[i-1]) && (normalized[i]>ratio))
@@ -222,7 +222,7 @@ double calc_harmonics(fftw_complex* fft, double* fft_mag, size_t sample_size, do
     int    num_harmonics_seen = 0;
     for (size_t i = 0; i<sample_size/2+1; ++i)
     {
-        if ((harmonics[i]>100)&&(harmonics[i]<500))
+        if ((harmonics[i]>50)&&(harmonics[i]<500))
         {
             if (prev_harmonic==0) {
                 prev_harmonic = harmonics[i];

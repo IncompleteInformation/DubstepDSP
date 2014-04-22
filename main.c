@@ -13,7 +13,6 @@
 #include <portmidi.h>
 
 #define SAMPLE_RATE   (double)(44100)
-#define BUFFER_SIZE   (65536)
 #define FRAMES_PER_BUFFER  (64)
 #define FFT_SIZE (1024) //512 = 11ms delay, 86Hz bins
 #define ONSET_FFT_SIZE (64)
@@ -23,8 +22,6 @@
 //PmStream* midi;
 
 typedef struct{
-    float data[BUFFER_SIZE];
-    float bufferData[BUFFER_SIZE];
     //fft generators et cetera
     double fft_buffer[FFT_SIZE];
     double ONSET_FFT_BUFFER[ONSET_FFT_SIZE];
@@ -198,32 +195,33 @@ int main (void)
 
     // Initialize OpenGL window
     double dbRange = 96;
-
-    GLFWwindow* window;
+    GLFWwindow* trackerWindow;
+    GLFWwindow* mainWindow;
     glfwSetErrorCallback(glfwError);
     if (!glfwInit()) exit(EXIT_FAILURE);
-    window = glfwCreateWindow(640, 480, "Simple example", NULL, NULL);
-    if (!window)
+    mainWindow = glfwCreateWindow(640, 480, "Main Analysis", NULL, NULL);
+    trackerWindow = glfwCreateWindow(640, 480, "Pitch Tracking", NULL, NULL);
+    if (!mainWindow|!trackerWindow)
     {
         glfwTerminate();
         exit(EXIT_FAILURE);
     }
-    glfwMakeContextCurrent(window);
-    glfwSetKeyCallback(window, onKeyPress);
 
-    // Play audio
+    // start stream
     paCheckError(Pa_StartStream(stream));
-
-    // Render shit for two seconds
-    glfwSetTime(0);
     
+    
+    float aspectRatio;
+    int width, height;
     int note_on = 0;
-    while (!glfwWindowShouldClose(window))
+    int pitchTrackerListSize = 256;
+    float pitchTrackerList[pitchTrackerListSize];
+    while (!glfwWindowShouldClose(mainWindow))
     {
-        float aspectRatio;
-        int width, height;
+        glfwMakeContextCurrent(mainWindow);
+        glfwSetKeyCallback(mainWindow, onKeyPress);
 
-        glfwGetFramebufferSize(window, &width, &height);
+        glfwGetFramebufferSize(mainWindow, &width, &height);
         aspectRatio = width / (float) height;
 
         glViewport(0, 0, width, height);
@@ -235,6 +233,22 @@ int main (void)
 
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
+        
+        //log lines
+        glBegin(GL_LINES);
+        int j = 0;
+        int k = 10;
+        double logLogLinesX = log10(SAMPLE_RATE/2);
+        while(j<(SAMPLE_RATE/2))
+        {
+            glColor3f(0.6f,0.4f,0.1f);
+            double logJ = xLogNormalize((double)j, logLogLinesX);
+            glVertex3f(aspectRatio*(2*logJ-1), -1, 0.f);
+            glVertex3f(aspectRatio*(2*logJ-1), 1, 0.f);
+            j+=k;
+            if (j==k*10) k*=10;
+        }
+        glEnd();
         
         //fft_mag graph (db, log)
         glBegin(GL_LINE_STRIP);
@@ -268,36 +282,16 @@ int main (void)
         //dominant pitch line (lowpassed)
         glBegin(GL_LINES);
         glColor3f(0.f, 1.f, 1.f);
-//        printf("%f\n", ud.dominant_frequency_lp);
         double domlogMax = log10(SAMPLE_RATE/2);
         double logNormDomFreq_lp = xLogNormalize(ud.dominant_frequency_lp, domlogMax);
         glVertex3f(aspectRatio*(2*logNormDomFreq_lp-1), -1, 0.f);
         glVertex3f(aspectRatio*(2*logNormDomFreq_lp-1), 1, 0.f);
         glEnd();
-        
-        //spectral crest
-        //printf("spectral crest: %f\n", ud.spectral_crest);
-        
-        //log lines
-        glBegin(GL_LINES);
-        int j = 0;
-        int k = 10;
-        double logLogLinesX = log10(SAMPLE_RATE/2);
-        while(j<(SAMPLE_RATE/2))
-        {
-            glColor3f(0.6f,0.4f,0.1f);
-            double logJ = xLogNormalize((double)j, logLogLinesX);
-            glVertex3f(aspectRatio*(2*logJ-1), -1, 0.f);
-            glVertex3f(aspectRatio*(2*logJ-1), 1, 0.f);
-            j+=k;
-            if (j==k*10) k*=10;
-        }
-        glEnd();
 
-        glfwSwapBuffers(window);
+        glfwSwapBuffers(mainWindow);
         glfwPollEvents();
-        
 
+        
         //SERIAL DATA HANDLING
         if (ser_live)
         {
@@ -317,6 +311,7 @@ int main (void)
             }
         }
         //MIDI OUT STATEMENTS
+        int outputPitch;
         if (ud.onset_average_amplitude>ONSET_THRESHOLD){
             if (!note_on)
             {
@@ -326,7 +321,7 @@ int main (void)
             //0x2000 is 185 hz, 0x0000 is 73.416, 0x3fff is 466.16
             double midiNumber = 12 * log2(ud.dominant_frequency_lp/440) + 69;
             //0x0000 is 38, 0x3fff is 70
-            int outputPitch = (int)((midiNumber-38)/32*0x3FFF);
+            outputPitch = (int)((midiNumber-38)/32*0x3FFF);
             if (outputPitch > 0x3FFF) outputPitch = 0x3FFF;
             if (outputPitch < 0x0000) outputPitch = 0x0000;
             int lsb_7 = outputPitch&0x7F;
@@ -344,9 +339,64 @@ int main (void)
                 midi_write(Pm_Message(0x80|midi_channel, 54, 100));
                 note_on = 0;
             }
+            outputPitch = -1;
         }
         midi_flush();
         
+        //PITCH TRACKING WINDOW
+        glfwMakeContextCurrent(trackerWindow);
+        glfwSetKeyCallback(trackerWindow, onKeyPress);
+        
+        glfwGetFramebufferSize(trackerWindow, &width, &height);
+        aspectRatio = width / (float) height;
+        
+        glViewport(0, 0, width, height);
+        glClear(GL_COLOR_BUFFER_BIT);
+        
+        glClearColor(1, 1, 1, 1);
+        
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
+        glOrtho(-aspectRatio, aspectRatio, -1.f, 1.f, 1.f, -1.f);
+        
+        glMatrixMode(GL_MODELVIEW);
+        glLoadIdentity();
+        
+        //log lines
+        glBegin(GL_LINES);
+        for (int i = 0; i<36; ++i)
+        {
+            glColor3f(0.9f,0.7f,0.5f);
+            glVertex3f(aspectRatio*-1, 2*(i/36.f)-1, 0.f);
+            glVertex3f(aspectRatio, 2*(i/36.f)-1, 0.f);
+            j+=k;
+            if (j==k*10) k*=10;
+        }
+        glEnd();
+
+        for (int i = pitchTrackerListSize-1; i > 0; --i)
+        {
+            pitchTrackerList[i] = pitchTrackerList[i-1];
+        }
+        pitchTrackerList[0] = (float)outputPitch/0x3FFF;
+        
+        glBegin(GL_POINTS);
+        glColor3f(0.f, 0.f, 0.1f);
+        for (int i = 0; i < pitchTrackerListSize; ++i)
+        {
+            float xPos = aspectRatio*((2*i/(float)pitchTrackerListSize)-1);
+            float yPos = 2*pitchTrackerList[i]-1;
+            glVertex3f(xPos, yPos, 0.f);
+        }
+        glEnd();
+        
+        
+        glfwSwapBuffers(trackerWindow);
+        glfwPollEvents();
+        
+
+        
+
         
         
         //PRINT STATEMENTS
@@ -355,7 +405,7 @@ int main (void)
         //        printf("low_passed_dom_freq : %f\n", ud.dominant_frequency_lp);
         //        printf("first 8 bins: %06.2f %06.2f %06.2f %06.2f %06.2f %06.2f %06.2f %06.2f\n", ud.fft_mag[0], ud.fft_mag[1], ud.fft_mag[2], ud.fft_mag[3], ud.fft_mag[4], ud.fft_mag[5], ud.fft_mag[6], ud.fft_mag[7]);
         //        printf("onset amplitude: %f\n",ud.onset_average_amplitude);
-        //    printf("harmonic average vs. lp_pitch: %f %f\n", ud.harmonic_average, ud.dominant_frequency_lp);
+//            printf("harmonic average vs. lp_pitch: %f %f\n", ud.harmonic_average, ud.dominant_frequency_lp);
         printf("midi channel, angle: %i\t %i\n",midi_channel, angle);
     }
     
@@ -364,7 +414,8 @@ int main (void)
     
 
     // Shut down GLFW
-    glfwDestroyWindow(window);
+    glfwDestroyWindow(mainWindow);
+    glfwDestroyWindow(trackerWindow);
     glfwTerminate();
     
     // Shut down PortAudio
