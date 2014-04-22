@@ -2,8 +2,8 @@ FLAGS=-O3
 
 default: bleep_test
 
-bleep: main.c pitch.c
-	@cc ${FLAGS} main.c midi.c pitch.c -o bleep \
+bleep: main.c midi.c pitch.c serial.c
+	@cc ${FLAGS} main.c midi.c pitch.c serial.c -o bleep \
 		-lfftw3 \
 		-lglfw3 \
 		-lportaudio \
@@ -36,3 +36,14 @@ serial: serial.c serial.h serial_test.c
 
 serial_test: serial
 	@./serial_test
+
+simulator: simulator.c
+	@cc ${FLAGS} simulator.c -o simulator \
+		-lfftw3 \
+		-lglfw3 \
+		-lportaudio \
+		-lsndfile \
+		-framework Cocoa \
+		-framework IOKit \
+		-framework OpenGL \
+		-framework CoreVideo

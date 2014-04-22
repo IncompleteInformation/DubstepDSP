@@ -19,35 +19,30 @@
 #define BIN_SIZE ((double) SAMPLE_RATE/FFT_SIZE)
 #define ONSET_THRESHOLD (.025)
 
-//PmStream* midi;
-
-typedef struct{
-    //fft generators et cetera
-    double fft_buffer[FFT_SIZE];
-    double ONSET_FFT_BUFFER[ONSET_FFT_SIZE];
-    int fft_buffer_loc;
-    fftw_complex fft[FFT_SIZE/2 + 1];
-    fftw_complex fft_fft[(FFT_SIZE/2 +1)/2 +1];
-    double fft_mag[FFT_SIZE/2 + 1];
-    double fft_fft_mag[(FFT_SIZE/2+1)/2+1];
-    double harmonics[FFT_SIZE/2+1];
-    //fft analyzers
-    double spectral_centroid;
-    double dominant_frequency;
-    double dominant_frequency_lp;
-    double average_amplitude;
-    double spectral_crest;
-    double spectral_flatness;
-    double harmonic_average;
-    //onset detection
-    double onset_fft_buffer[ONSET_FFT_SIZE];
-    fftw_complex onset_fft[ONSET_FFT_SIZE];
-    double onset_fft_mag[ONSET_FFT_SIZE/2+1];
-    double onset_average_amplitude;
-    int    onset_fft_buffer_loc;
-    int    onset_triggered;
-    //
-} UserData;
+//fft generators et cetera
+double fft_buffer[FFT_SIZE];
+double ONSET_FFT_BUFFER[ONSET_FFT_SIZE];
+int fft_buffer_loc;
+fftw_complex fft[FFT_SIZE/2 + 1];
+fftw_complex fft_fft[(FFT_SIZE/2 +1)/2 +1];
+double fft_mag[FFT_SIZE/2 + 1];
+double fft_fft_mag[(FFT_SIZE/2+1)/2+1];
+double harmonics[FFT_SIZE/2+1];
+//fft analyzers
+double spectral_centroid;
+double dominant_frequency;
+double dominant_frequency_lp;
+double average_amplitude;
+double spectral_crest;
+double spectral_flatness;
+double harmonic_average;
+//onset detection
+double onset_fft_buffer[ONSET_FFT_SIZE];
+fftw_complex onset_fft[ONSET_FFT_SIZE];
+double onset_fft_mag[ONSET_FFT_SIZE/2+1];
+double onset_average_amplitude;
+int    onset_fft_buffer_loc;
+int    onset_triggered;
 
 static void glfwError (int error, const char* description)
 {
@@ -71,38 +66,38 @@ static void onKeyPress (GLFWwindow* window, int key, int scancode, int action, i
         glfwSetWindowShouldClose(window, GL_TRUE);
 }
 
-static void update_fft_buffer(float mic_bit, UserData* ud)
+static void update_fft_buffer(float mic_bit)
 {
-    ud->onset_fft_buffer[ud->onset_fft_buffer_loc] = mic_bit;
-    ++ud->onset_fft_buffer_loc;
-    if (ud->onset_fft_buffer_loc==ONSET_FFT_SIZE)
+    onset_fft_buffer[onset_fft_buffer_loc] = mic_bit;
+    ++onset_fft_buffer_loc;
+    if (onset_fft_buffer_loc==ONSET_FFT_SIZE)
         {
-            ud->onset_fft_buffer_loc = 0;
+            onset_fft_buffer_loc = 0;
             double tmp[ONSET_FFT_SIZE];
-            calc_fft(ud->onset_fft_buffer, ud->onset_fft, tmp, ONSET_FFT_SIZE);
-            calc_fft_mag(ud->onset_fft, ud->onset_fft_mag, ONSET_FFT_SIZE/2+1);
-            ud->onset_average_amplitude = calc_avg_amplitude(ud->onset_fft_mag, ONSET_FFT_SIZE, SAMPLE_RATE, 0, SAMPLE_RATE/2);
+            calc_fft(onset_fft_buffer, onset_fft, tmp, ONSET_FFT_SIZE);
+            calc_fft_mag(onset_fft, onset_fft_mag, ONSET_FFT_SIZE/2+1);
+            onset_average_amplitude = calc_avg_amplitude(onset_fft_mag, ONSET_FFT_SIZE, SAMPLE_RATE, 0, SAMPLE_RATE/2);
         }
     //stall calculations of large ffts until onset is detected. This will currently cancel the last 25ms of a transform that with p>.5, should happen. IDC right now. Mechanism is to reset fft_buffer_loc back to the beginning.
-    if (ud->onset_average_amplitude<ONSET_THRESHOLD) ud->fft_buffer_loc = 0;
-    ud->fft_buffer[ud->fft_buffer_loc] = mic_bit;
-    ++ud->fft_buffer_loc;
-    if (ud->fft_buffer_loc==FFT_SIZE)
+    if (onset_average_amplitude<ONSET_THRESHOLD) fft_buffer_loc = 0;
+    fft_buffer[fft_buffer_loc] = mic_bit;
+    ++fft_buffer_loc;
+    if (fft_buffer_loc==FFT_SIZE)
         {
-            ud->fft_buffer_loc=0;
+            fft_buffer_loc=0;
             double tmp[FFT_SIZE];
 //            double tmp2[FFT_SIZE/2 + 1];
-            calc_fft(ud->fft_buffer, ud->fft, tmp, FFT_SIZE);
-            calc_fft_mag(ud->fft, ud->fft_mag, FFT_SIZE);
-            //calc_fft(ud->fft_mag, ud->fft_fft, tmp2, FFT_SIZE/2 +1);
-            //calc_fft_mag(ud->fft_fft, ud->fft_fft_mag, FFT_SIZE/2 + 1);
-            ud->dominant_frequency = 0; //dominant_freq(ud->fft, ud->fft_mag, FFT_SIZE, SAMPLE_RATE);
-            ud->spectral_centroid = calc_spectral_centroid(ud->fft_mag,FFT_SIZE, SAMPLE_RATE);
-            ud->dominant_frequency_lp = dominant_freq_lp(ud->fft, ud->fft_mag, FFT_SIZE, SAMPLE_RATE, 500);
-            ud->average_amplitude = calc_avg_amplitude(ud->fft_mag, FFT_SIZE, SAMPLE_RATE, 0, FFT_SIZE/2);
-            ud->spectral_crest = 0; //calc_spectral_crest(ud->fft_mag, FFT_SIZE, SAMPLE_RATE);
-            ud->spectral_flatness = 0; //calc_spectral_flatness(ud->fft_mag, FFT_SIZE, SAMPLE_RATE, 0, SAMPLE_RATE/2);
-            ud->harmonic_average = calc_harmonics(ud->fft, ud->fft_mag, FFT_SIZE, SAMPLE_RATE); //useless and computationally intensive
+            calc_fft(fft_buffer, fft, tmp, FFT_SIZE);
+            calc_fft_mag(fft, fft_mag, FFT_SIZE);
+            //calc_fft(fft_mag, fft_fft, tmp2, FFT_SIZE/2 +1);
+            //calc_fft_mag(fft_fft, fft_fft_mag, FFT_SIZE/2 + 1);
+            dominant_frequency = 0; //dominant_freq(fft, fft_mag, FFT_SIZE, SAMPLE_RATE);
+            spectral_centroid = calc_spectral_centroid(fft_mag,FFT_SIZE, SAMPLE_RATE);
+            dominant_frequency_lp = dominant_freq_lp(fft, fft_mag, FFT_SIZE, SAMPLE_RATE, 500);
+            average_amplitude = calc_avg_amplitude(fft_mag, FFT_SIZE, SAMPLE_RATE, 0, FFT_SIZE/2);
+            spectral_crest = 0; //calc_spectral_crest(fft_mag, FFT_SIZE, SAMPLE_RATE);
+            spectral_flatness = 0; //calc_spectral_flatness(fft_mag, FFT_SIZE, SAMPLE_RATE, 0, SAMPLE_RATE/2);
+            harmonic_average = calc_harmonics(fft, fft_mag, FFT_SIZE, SAMPLE_RATE); //useless and computationally intensive
             
             //onset fft settings and calculations
             
@@ -114,15 +109,14 @@ static int onAudioSync (const void* inputBuffer, void* outputBuffer,
                         PaStreamCallbackFlags statusFlags,
                         void* userData)
 {
-    UserData* ud = (UserData*) userData;
     float* in = (float*)inputBuffer;
     //float* out = (float*)outputBuffer;
 
     for (int i = 0; i < framesPerBuffer; ++i)
     {
-        if (in[i] > 1){update_fft_buffer(1, ud);printf("%s\n", "clipping high");continue;}
-        if (in[i] < -1){update_fft_buffer(-1, ud);printf("%s\n", "clipping low");continue;}
-        update_fft_buffer(in[i], ud);
+        if (in[i] > 1){update_fft_buffer(1);printf("%s\n", "clipping high");continue;}
+        if (in[i] < -1){update_fft_buffer(-1);printf("%s\n", "clipping low");continue;}
+        update_fft_buffer(in[i]);
         // if (in[i] > 0.1) printf("%f\n", in[i]);
     }
 
@@ -140,10 +134,9 @@ double dbNormalize(double magnitude, double max_magnitude, double dbRange)
 }
 int main (void)
 {
-    UserData ud;
-    ud.fft_buffer_loc = 0;
-    ud.onset_fft_buffer_loc = 0;
-    ud.onset_triggered = 0;
+    fft_buffer_loc = 0;
+    onset_fft_buffer_loc = 0;
+    onset_triggered = 0;
     
     // Initialize PortMidi
     midi_init();
@@ -191,7 +184,7 @@ int main (void)
                  FRAMES_PER_BUFFER,
                  paClipOff,
                  onAudioSync,
-                 &ud));
+                 NULL));
 
     // Initialize OpenGL window
     double dbRange = 96;
@@ -201,7 +194,7 @@ int main (void)
     if (!glfwInit()) exit(EXIT_FAILURE);
     mainWindow = glfwCreateWindow(640, 480, "Main Analysis", NULL, NULL);
     trackerWindow = glfwCreateWindow(640, 480, "Pitch Tracking", NULL, NULL);
-    if (!mainWindow|!trackerWindow)
+    if (!mainWindow || !trackerWindow)
     {
         glfwTerminate();
         exit(EXIT_FAILURE);
@@ -257,7 +250,7 @@ int main (void)
         for (int i = 0; i < FFT_SIZE/2+1; ++i)
         {
             double logI = xLogNormalize(i*BIN_SIZE, logMax);
-            double scaledMag = dbNormalize(ud.fft_mag[i], FFT_SIZE, dbRange);
+            double scaledMag = dbNormalize(fft_mag[i], FFT_SIZE, dbRange);
             glVertex3f(2*aspectRatio*logI-aspectRatio, 2*scaledMag-1, 0.f);
         }
         glEnd();
@@ -265,7 +258,7 @@ int main (void)
         //specral centroid marker
         glBegin(GL_LINES);
         glColor3f(1.f, 0.f, 0.f);
-        double logCentroid = log10(ud.spectral_centroid)*(SAMPLE_RATE/2)/log10(SAMPLE_RATE/2+1);
+        double logCentroid = log10(spectral_centroid)*(SAMPLE_RATE/2)/log10(SAMPLE_RATE/2+1);
         glVertex3f(2*aspectRatio*logCentroid/(SAMPLE_RATE/2)-aspectRatio, -1, 0.f);
         glVertex3f(2*aspectRatio*logCentroid/(SAMPLE_RATE/2)-aspectRatio, 1, 0.f);
         glEnd();
@@ -274,7 +267,7 @@ int main (void)
 //        glBegin(GL_LINES);
 //        glColor3f(0.f, 1.f, 0.f);
 //        logMax = log10(SAMPLE_RATE/2);
-//        double logNormDomFreq = xLogNormalize(ud.dominant_frequency, logMax);
+//        double logNormDomFreq = xLogNormalize(dominant_frequency, logMax);
 //        glVertex3f(aspectRatio*(2*logNormDomFreq-1), -1, 0.f);
 //        glVertex3f(aspectRatio*(2*logNormDomFreq-1), 1, 0.f);
 //        glEnd();
@@ -283,7 +276,7 @@ int main (void)
         glBegin(GL_LINES);
         glColor3f(0.f, 1.f, 1.f);
         double domlogMax = log10(SAMPLE_RATE/2);
-        double logNormDomFreq_lp = xLogNormalize(ud.dominant_frequency_lp, domlogMax);
+        double logNormDomFreq_lp = xLogNormalize(dominant_frequency_lp, domlogMax);
         glVertex3f(aspectRatio*(2*logNormDomFreq_lp-1), -1, 0.f);
         glVertex3f(aspectRatio*(2*logNormDomFreq_lp-1), 1, 0.f);
         glEnd();
@@ -312,21 +305,21 @@ int main (void)
         }
         //MIDI OUT STATEMENTS
         int outputPitch;
-        if (ud.onset_average_amplitude>ONSET_THRESHOLD){
+        if (onset_average_amplitude>ONSET_THRESHOLD){
             if (!note_on)
             {
-                midi_write(Pm_Message(0x90|midi_channel, 54, 100/*(int)ud.average_amplitude*/));
+                midi_write(Pm_Message(0x90|midi_channel, 54, 100/*(int)average_amplitude*/));
                 note_on = 1;
             }
             //0x2000 is 185 hz, 0x0000 is 73.416, 0x3fff is 466.16
-            double midiNumber = 12 * log2(ud.dominant_frequency_lp/440) + 69;
+            double midiNumber = 12 * log2(dominant_frequency_lp/440) + 69;
             //0x0000 is 38, 0x3fff is 70
             outputPitch = (int)((midiNumber-38)/32*0x3FFF);
             if (outputPitch > 0x3FFF) outputPitch = 0x3FFF;
             if (outputPitch < 0x0000) outputPitch = 0x0000;
             int lsb_7 = outputPitch&0x7F;
             int msb_7 = (outputPitch>>7)&0x7F;
-            int outputCentroid = (int)((ud.spectral_centroid-400)/400*127);
+            int outputCentroid = (int)((spectral_centroid-400)/400*127);
             if (outputCentroid > 127) outputCentroid = 127;
             if (outputCentroid < 000) outputCentroid = 000;
             
@@ -427,12 +420,12 @@ int main (void)
         
         
         //PRINT STATEMENTS
-        //        printf("full_spectrum amplitude: %f\n", ud.average_amplitude);
-        //        printf("full_spectrum_flatness: %f\n", ud.spectral_flatness);
-        //        printf("low_passed_dom_freq : %f\n", ud.dominant_frequency_lp);
-        //        printf("first 8 bins: %06.2f %06.2f %06.2f %06.2f %06.2f %06.2f %06.2f %06.2f\n", ud.fft_mag[0], ud.fft_mag[1], ud.fft_mag[2], ud.fft_mag[3], ud.fft_mag[4], ud.fft_mag[5], ud.fft_mag[6], ud.fft_mag[7]);
-        //        printf("onset amplitude: %f\n",ud.onset_average_amplitude);
-//            printf("harmonic average vs. lp_pitch: %f %f\n", ud.harmonic_average, ud.dominant_frequency_lp);
+        //        printf("full_spectrum amplitude: %f\n", average_amplitude);
+        //        printf("full_spectrum_flatness: %f\n", spectral_flatness);
+        //        printf("low_passed_dom_freq : %f\n", dominant_frequency_lp);
+        //        printf("first 8 bins: %06.2f %06.2f %06.2f %06.2f %06.2f %06.2f %06.2f %06.2f\n", fft_mag[0], fft_mag[1], fft_mag[2], fft_mag[3], fft_mag[4], fft_mag[5], fft_mag[6], fft_mag[7]);
+        //        printf("onset amplitude: %f\n",onset_average_amplitude);
+//            printf("harmonic average vs. lp_pitch: %f %f\n", harmonic_average, dominant_frequency_lp);
         printf("midi channel, angle: %i\t %i\n",midi_channel, angle);
     }
     
