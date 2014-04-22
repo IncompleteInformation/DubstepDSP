@@ -369,8 +369,6 @@ int main (void)
             glColor3f(0.9f,0.7f,0.5f);
             glVertex3f(aspectRatio*-1, 2*(i/36.f)-1, 0.f);
             glVertex3f(aspectRatio, 2*(i/36.f)-1, 0.f);
-            j+=k;
-            if (j==k*10) k*=10;
         }
         glEnd();
 
@@ -382,6 +380,16 @@ int main (void)
         
         glBegin(GL_POINTS);
         glColor3f(0.f, 0.f, 0.1f);
+        for (int i = 0; i < pitchTrackerListSize; ++i)
+        {
+            float xPos = aspectRatio*((2*i/(float)pitchTrackerListSize)-1);
+            float yPos = 2*pitchTrackerList[i]-1;
+            glVertex3f(xPos, yPos, 0.f);
+        }
+        glEnd();
+        
+        glBegin(GL_LINES);
+        glColor3f(0.f, 0.f, 0.0f);
         for (int i = 0; i < pitchTrackerListSize; ++i)
         {
             float xPos = aspectRatio*((2*i/(float)pitchTrackerListSize)-1);
