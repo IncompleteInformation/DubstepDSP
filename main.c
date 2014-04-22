@@ -49,7 +49,7 @@ static void glfwError (int error, const char* description)
     fputs(description, stderr);
 }
 
-static void paCheckError (PaError error)
+static void pa_check_error (PaError error)
 {
     if (error == paNoError) return;
 
@@ -60,13 +60,13 @@ static void paCheckError (PaError error)
     exit(EXIT_FAILURE);
 }
 
-static void onKeyPress (GLFWwindow* window, int key, int scancode, int action, int mods)
+static void on_key_press (GLFWwindow* window, int key, int scancode, int action, int mods)
 {
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
         glfwSetWindowShouldClose(window, GL_TRUE);
 }
 
-static void update_fft_buffer(float mic_bit)
+static void update_fft_buffer (float mic_bit)
 {
     onset_fft_buffer[onset_fft_buffer_loc] = mic_bit;
     ++onset_fft_buffer_loc;
@@ -103,7 +103,7 @@ static void update_fft_buffer(float mic_bit)
             
         }
 }
-static int onAudioSync (const void* inputBuffer, void* outputBuffer,
+static int on_audio_sync (const void* inputBuffer, void* outputBuffer,
                         unsigned long framesPerBuffer,
                         const PaStreamCallbackTimeInfo* timeInfo,
                         PaStreamCallbackFlags statusFlags,
@@ -123,15 +123,17 @@ static int onAudioSync (const void* inputBuffer, void* outputBuffer,
     return paContinue;
 }
 
-double xLogNormalize(double unscaled, double logMax)
+double x_log_normalize (double unscaled, double logMax)
 {
     return log10(unscaled)/logMax;
 }
-double dbNormalize(double magnitude, double max_magnitude, double dbRange)
+
+double db_normalize (double magnitude, double max_magnitude, double dbRange)
 {
     double absDb = 10*log10(magnitude/max_magnitude); //between -inf and 0
     return (dbRange+absDb)/dbRange; //between 0 and 1
 }
+
 int main (void)
 {
     fft_buffer_loc = 0;
@@ -150,7 +152,7 @@ int main (void)
     ser_live = serial_init();
 
     // Initialize PortAudio
-    paCheckError(Pa_Initialize());
+    pa_check_error(Pa_Initialize());
 
     // Configure stream input
     PaStreamParameters in;
@@ -176,14 +178,14 @@ int main (void)
 
     // Initialize stream
     PaStream *stream;
-    paCheckError(Pa_OpenStream(
+    pa_check_error(Pa_OpenStream(
                  &stream,
                  &in,
                  &out,
                  SAMPLE_RATE,
                  FRAMES_PER_BUFFER,
                  paClipOff,
-                 onAudioSync,
+                 on_audio_sync,
                  NULL));
 
     // Initialize OpenGL window
@@ -201,7 +203,7 @@ int main (void)
     }
 
     // start stream
-    paCheckError(Pa_StartStream(stream));
+    pa_check_error(Pa_StartStream(stream));
     
     
     float aspectRatio;
@@ -212,7 +214,7 @@ int main (void)
     while (!glfwWindowShouldClose(mainWindow))
     {
         glfwMakeContextCurrent(mainWindow);
-        glfwSetKeyCallback(mainWindow, onKeyPress);
+        glfwSetKeyCallback(mainWindow, on_key_press);
 
         glfwGetFramebufferSize(mainWindow, &width, &height);
         aspectRatio = width / (float) height;
@@ -235,7 +237,7 @@ int main (void)
         while(j<(SAMPLE_RATE/2))
         {
             glColor3f(0.6f,0.4f,0.1f);
-            double logJ = xLogNormalize((double)j, logLogLinesX);
+            double logJ = x_log_normalize((double)j, logLogLinesX);
             glVertex3f(aspectRatio*(2*logJ-1), -1, 0.f);
             glVertex3f(aspectRatio*(2*logJ-1), 1, 0.f);
             j+=k;
@@ -249,8 +251,8 @@ int main (void)
         double logMax = log10(SAMPLE_RATE/2);
         for (int i = 0; i < FFT_SIZE/2+1; ++i)
         {
-            double logI = xLogNormalize(i*BIN_SIZE, logMax);
-            double scaledMag = dbNormalize(fft_mag[i], FFT_SIZE, dbRange);
+            double logI = x_log_normalize(i*BIN_SIZE, logMax);
+            double scaledMag = db_normalize(fft_mag[i], FFT_SIZE, dbRange);
             glVertex3f(2*aspectRatio*logI-aspectRatio, 2*scaledMag-1, 0.f);
         }
         glEnd();
@@ -267,7 +269,7 @@ int main (void)
 //        glBegin(GL_LINES);
 //        glColor3f(0.f, 1.f, 0.f);
 //        logMax = log10(SAMPLE_RATE/2);
-//        double logNormDomFreq = xLogNormalize(dominant_frequency, logMax);
+//        double logNormDomFreq = x_log_normalize(dominant_frequency, logMax);
 //        glVertex3f(aspectRatio*(2*logNormDomFreq-1), -1, 0.f);
 //        glVertex3f(aspectRatio*(2*logNormDomFreq-1), 1, 0.f);
 //        glEnd();
@@ -276,7 +278,7 @@ int main (void)
         glBegin(GL_LINES);
         glColor3f(0.f, 1.f, 1.f);
         double domlogMax = log10(SAMPLE_RATE/2);
-        double logNormDomFreq_lp = xLogNormalize(dominant_frequency_lp, domlogMax);
+        double logNormDomFreq_lp = x_log_normalize(dominant_frequency_lp, domlogMax);
         glVertex3f(aspectRatio*(2*logNormDomFreq_lp-1), -1, 0.f);
         glVertex3f(aspectRatio*(2*logNormDomFreq_lp-1), 1, 0.f);
         glEnd();
@@ -338,7 +340,7 @@ int main (void)
         
         //PITCH TRACKING WINDOW
         glfwMakeContextCurrent(trackerWindow);
-        glfwSetKeyCallback(trackerWindow, onKeyPress);
+        glfwSetKeyCallback(trackerWindow, on_key_press);
         
         glfwGetFramebufferSize(trackerWindow, &width, &height);
         aspectRatio = width / (float) height;
@@ -439,8 +441,8 @@ int main (void)
     glfwTerminate();
     
     // Shut down PortAudio
-    paCheckError(Pa_StopStream(stream));
-    paCheckError(Pa_CloseStream(stream));
+    pa_check_error(Pa_StopStream(stream));
+    pa_check_error(Pa_CloseStream(stream));
     Pa_Terminate();
 
     // Shut down PortMidi
