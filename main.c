@@ -339,7 +339,7 @@ int main (void)
                 midi_write(Pm_Message(0x80|midi_channel, 54, 100));
                 note_on = 0;
             }
-            outputPitch = -1;
+            outputPitch = -INFINITY;
         }
         midi_flush();
         
@@ -372,29 +372,48 @@ int main (void)
         }
         glEnd();
 
-        for (int i = pitchTrackerListSize-1; i > 0; --i)
+        for (int i = 1; i < pitchTrackerListSize; ++i)
         {
-            pitchTrackerList[i] = pitchTrackerList[i-1];
+            pitchTrackerList[i] = pitchTrackerList[i+1];
         }
-        pitchTrackerList[0] = (float)outputPitch/0x3FFF;
+        pitchTrackerList[pitchTrackerListSize-1] = (float)outputPitch/0x3FFF;
         
-        glBegin(GL_POINTS);
+        glBegin(GL_LINES);
         glColor3f(0.f, 0.f, 0.1f);
         for (int i = 0; i < pitchTrackerListSize; ++i)
         {
-            float xPos = aspectRatio*((2*i/(float)pitchTrackerListSize)-1);
+            float xPos1 = aspectRatio*((2*i/(float)pitchTrackerListSize)-1);
+            float xPos2 = aspectRatio*((2*(i+1)/(float)pitchTrackerListSize)-1);
             float yPos = 2*pitchTrackerList[i]-1;
-            glVertex3f(xPos, yPos, 0.f);
+            glVertex3f(xPos1, yPos, 0.f);
+            glVertex3f(xPos2, yPos, 0.f);
         }
         glEnd();
         
         glBegin(GL_LINES);
-        glColor3f(0.f, 0.f, 0.0f);
         for (int i = 0; i < pitchTrackerListSize; ++i)
         {
-            float xPos = aspectRatio*((2*i/(float)pitchTrackerListSize)-1);
-            float yPos = 2*pitchTrackerList[i]-1;
-            glVertex3f(xPos, yPos, 0.f);
+            if (i!=0)
+            {
+                if ((pitchTrackerList[i-1] < 0) & (pitchTrackerList[i]>=0))
+                {
+                    float xPos = aspectRatio*((2*i/(float)pitchTrackerListSize)-1);
+                    glColor3f(0.0f, 0.3f, 0.0f);
+                    glVertex3f(xPos, -1, 0.f);
+                    glVertex3f(xPos, 1, 0.f);
+                }
+            }
+            if (i!=pitchTrackerListSize)
+            {
+                if ((pitchTrackerList[i+1] < 0) & (pitchTrackerList[i]>=0))
+                {
+                    float xPos = aspectRatio*((2*i/(float)pitchTrackerListSize)-1);
+                    glColor3f(0.3f, 0.0f, 0.0f);
+                    glVertex3f(xPos, -1, 0.f);
+                    glVertex3f(xPos, 1, 0.f);
+                }
+            }
+
         }
         glEnd();
         
