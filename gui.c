@@ -17,6 +17,7 @@ static double dbRange;
 static int    width, height;
 static float  aspectRatio;
 static float  pitchTrackerList[PITCHTRACKERLISTSIZE];
+static bool   note_on;
 
 static void on_key_press (GLFWwindow* window, int key, int scancode, int action, int mods)
 {
@@ -178,7 +179,8 @@ void gui_redraw ()
     }
 
     double midiNumber = 12 * log2(dominant_frequency_lp/440) + 69;
-    double outputPitch = (int)((midiNumber-38)/32*0x3FFF);
+    int outputPitch = (int)((midiNumber-38)/32*0x3FFF);
+    if (onset_average_amplitude < ONSET_THRESHOLD) outputPitch = -INFINITY;
     pitchTrackerList[PITCHTRACKERLISTSIZE-1] = (float)outputPitch/0x3FFF;
     
     glBegin(GL_LINES);

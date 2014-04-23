@@ -3,6 +3,7 @@
 /midi_test
 /pitch_test
 /serial_test
+/simulator
 /glfw*
 
 xcuserdata
