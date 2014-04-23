@@ -1,3 +1,4 @@
+#include "live.h"
 #include "pitch.h"
 #include "midi.h"
 #include "serial.h"
@@ -11,38 +12,6 @@
 #include <portaudio.h>
 #include <fftw3.h>
 #include <portmidi.h>
-
-#define SAMPLE_RATE   (double)(44100)
-#define FRAMES_PER_BUFFER  (64)
-#define FFT_SIZE (1024) //512 = 11ms delay, 86Hz bins
-#define ONSET_FFT_SIZE (64)
-#define BIN_SIZE ((double) SAMPLE_RATE/FFT_SIZE)
-#define ONSET_THRESHOLD (.025)
-
-//fft generators et cetera
-double fft_buffer[FFT_SIZE];
-double ONSET_FFT_BUFFER[ONSET_FFT_SIZE];
-int fft_buffer_loc;
-fftw_complex fft[FFT_SIZE/2 + 1];
-fftw_complex fft_fft[(FFT_SIZE/2 +1)/2 +1];
-double fft_mag[FFT_SIZE/2 + 1];
-double fft_fft_mag[(FFT_SIZE/2+1)/2+1];
-double harmonics[FFT_SIZE/2+1];
-//fft analyzers
-double spectral_centroid;
-double dominant_frequency;
-double dominant_frequency_lp;
-double average_amplitude;
-double spectral_crest;
-double spectral_flatness;
-double harmonic_average;
-//onset detection
-double onset_fft_buffer[ONSET_FFT_SIZE];
-fftw_complex onset_fft[ONSET_FFT_SIZE];
-double onset_fft_mag[ONSET_FFT_SIZE/2+1];
-double onset_average_amplitude;
-int    onset_fft_buffer_loc;
-int    onset_triggered;
 
 static void glfwError (int error, const char* description)
 {
@@ -66,43 +35,6 @@ static void on_key_press (GLFWwindow* window, int key, int scancode, int action,
         glfwSetWindowShouldClose(window, GL_TRUE);
 }
 
-static void update_fft_buffer (float mic_bit)
-{
-    onset_fft_buffer[onset_fft_buffer_loc] = mic_bit;
-    ++onset_fft_buffer_loc;
-    if (onset_fft_buffer_loc==ONSET_FFT_SIZE)
-        {
-            onset_fft_buffer_loc = 0;
-            double tmp[ONSET_FFT_SIZE];
-            calc_fft(onset_fft_buffer, onset_fft, tmp, ONSET_FFT_SIZE);
-            calc_fft_mag(onset_fft, onset_fft_mag, ONSET_FFT_SIZE/2+1);
-            onset_average_amplitude = calc_avg_amplitude(onset_fft_mag, ONSET_FFT_SIZE, SAMPLE_RATE, 0, SAMPLE_RATE/2);
-        }
-    //stall calculations of large ffts until onset is detected. This will currently cancel the last 25ms of a transform that with p>.5, should happen. IDC right now. Mechanism is to reset fft_buffer_loc back to the beginning.
-    if (onset_average_amplitude<ONSET_THRESHOLD) fft_buffer_loc = 0;
-    fft_buffer[fft_buffer_loc] = mic_bit;
-    ++fft_buffer_loc;
-    if (fft_buffer_loc==FFT_SIZE)
-        {
-            fft_buffer_loc=0;
-            double tmp[FFT_SIZE];
-//            double tmp2[FFT_SIZE/2 + 1];
-            calc_fft(fft_buffer, fft, tmp, FFT_SIZE);
-            calc_fft_mag(fft, fft_mag, FFT_SIZE);
-            //calc_fft(fft_mag, fft_fft, tmp2, FFT_SIZE/2 +1);
-            //calc_fft_mag(fft_fft, fft_fft_mag, FFT_SIZE/2 + 1);
-            dominant_frequency = 0; //dominant_freq(fft, fft_mag, FFT_SIZE, SAMPLE_RATE);
-            spectral_centroid = calc_spectral_centroid(fft_mag,FFT_SIZE, SAMPLE_RATE);
-            dominant_frequency_lp = dominant_freq_lp(fft, fft_mag, FFT_SIZE, SAMPLE_RATE, 500);
-            average_amplitude = calc_avg_amplitude(fft_mag, FFT_SIZE, SAMPLE_RATE, 0, FFT_SIZE/2);
-            spectral_crest = 0; //calc_spectral_crest(fft_mag, FFT_SIZE, SAMPLE_RATE);
-            spectral_flatness = 0; //calc_spectral_flatness(fft_mag, FFT_SIZE, SAMPLE_RATE, 0, SAMPLE_RATE/2);
-            harmonic_average = calc_harmonics(fft, fft_mag, FFT_SIZE, SAMPLE_RATE); //useless and computationally intensive
-            
-            //onset fft settings and calculations
-            
-        }
-}
 static int on_audio_sync (const void* inputBuffer, void* outputBuffer,
                         unsigned long framesPerBuffer,
                         const PaStreamCallbackTimeInfo* timeInfo,
@@ -114,21 +46,21 @@ static int on_audio_sync (const void* inputBuffer, void* outputBuffer,
 
     for (int i = 0; i < framesPerBuffer; ++i)
     {
-        if (in[i] > 1){update_fft_buffer(1);printf("%s\n", "clipping high");continue;}
-        if (in[i] < -1){update_fft_buffer(-1);printf("%s\n", "clipping low");continue;}
-        update_fft_buffer(in[i]);
+        if (in[i] > 1) { live_push_sample(1); printf("%s\n", "clipping high");continue;}
+        if (in[i] < -1) { live_push_sample(-1); printf("%s\n", "clipping low");continue;}
+        live_push_sample(in[i]);
         // if (in[i] > 0.1) printf("%f\n", in[i]);
     }
 
     return paContinue;
 }
 
-double x_log_normalize (double unscaled, double logMax)
+static double x_log_normalize (double unscaled, double logMax)
 {
     return log10(unscaled)/logMax;
 }
 
-double db_normalize (double magnitude, double max_magnitude, double dbRange)
+static double db_normalize (double magnitude, double max_magnitude, double dbRange)
 {
     double absDb = 10*log10(magnitude/max_magnitude); //between -inf and 0
     return (dbRange+absDb)/dbRange; //between 0 and 1
@@ -139,8 +71,11 @@ int main (void)
     fft_buffer_loc = 0;
     onset_fft_buffer_loc = 0;
     onset_triggered = 0;
+
+    // Initialize Live
+    live_init();
     
-    // Initialize PortMidi
+    // Initialize Midi
     midi_init();
     
     // Initialize RS-232 connection to glove
@@ -162,7 +97,6 @@ int main (void)
     in.suggestedLatency = Pa_GetDeviceInfo(in.device)->defaultLowInputLatency;
     in.hostApiSpecificStreamInfo = NULL;
 
-
     // Configure stream output
     PaStreamParameters out;
     out.device = Pa_GetDefaultOutputDevice();
@@ -178,15 +112,15 @@ int main (void)
 
     // Initialize stream
     PaStream *stream;
-    pa_check_error(Pa_OpenStream(
-                 &stream,
-                 &in,
-                 &out,
-                 SAMPLE_RATE,
-                 FRAMES_PER_BUFFER,
-                 paClipOff,
-                 on_audio_sync,
-                 NULL));
+    pa_check_error(Pa_OpenStream(&stream,
+                                 &in,
+                                 &out,
+                                 SAMPLE_RATE,
+                                 FRAMES_PER_BUFFER,
+                                 paClipOff,
+                                 on_audio_sync,
+                                 NULL));
+    pa_check_error(Pa_StartStream(stream));
 
     // Initialize OpenGL window
     double dbRange = 96;
@@ -201,17 +135,13 @@ int main (void)
         glfwTerminate();
         exit(EXIT_FAILURE);
     }
-
-    // start stream
-    pa_check_error(Pa_StartStream(stream));
-    
     
     float aspectRatio;
     int width, height;
     int note_on = 0;
     int pitchTrackerListSize = 256;
     float pitchTrackerList[pitchTrackerListSize];
-    while (!glfwWindowShouldClose(mainWindow))
+    while (!glfwWindowShouldClose(mainWindow) && !glfwWindowShouldClose(trackerWindow))
     {
         glfwMakeContextCurrent(mainWindow);
         glfwSetKeyCallback(mainWindow, on_key_press);
@@ -414,12 +344,7 @@ int main (void)
         
         
         glfwSwapBuffers(trackerWindow);
-        glfwPollEvents();
-        
-
-        
-
-        
+        glfwPollEvents();        
         
         //PRINT STATEMENTS
         //        printf("full_spectrum amplitude: %f\n", average_amplitude);
@@ -431,10 +356,6 @@ int main (void)
         printf("midi channel, angle: %i\t %i\n",midi_channel, angle);
     }
     
-    
-
-    
-
     // Shut down GLFW
     glfwDestroyWindow(mainWindow);
     glfwDestroyWindow(trackerWindow);

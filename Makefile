@@ -2,8 +2,8 @@ FLAGS=-O3
 
 default: bleep_test
 
-bleep: main.c midi.c pitch.c serial.c
-	@cc ${FLAGS} main.c midi.c pitch.c serial.c -o bleep \
+bleep: live.c main.c midi.c pitch.c serial.c
+	@cc ${FLAGS} live.c main.c midi.c pitch.c serial.c -o bleep \
 		-lfftw3 \
 		-lglfw3 \
 		-lportaudio \
