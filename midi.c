@@ -1,3 +1,5 @@
+#include "midi.h"
+
 #include <stdlib.h>
 
 #include <portmidi.h>

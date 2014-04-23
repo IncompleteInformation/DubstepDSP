@@ -1,5 +1,3 @@
-#include "pitch.h"
-
 #include <fftw3.h>
 
 #define SAMPLE_RATE       44100.0

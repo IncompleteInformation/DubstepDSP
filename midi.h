@@ -1,5 +1,3 @@
-#include <portmidi.h>
-
 // Initialize PortMidi
 void midi_init ();
 
@@ -8,7 +6,7 @@ void midi_cleanup ();
 
 // Append a message to the MIDI buffer
 // Return 0 on success, 1 on error.
-int midi_write (long message);
+int midi_write (int message);
 
 // Send a NOFF to all 4 channels
 void midi_NOFF ();

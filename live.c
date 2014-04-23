@@ -1,4 +1,5 @@
 #include "live.h"
+#include "pitch.h"
 
 #include <stdlib.h>
 #include <stdio.h>
