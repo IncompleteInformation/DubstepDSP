@@ -37,3 +37,20 @@ First install and start a MIDI synthesizer (like [SimpleSynth](http://notahat.co
 ```
 make
 ```
+
+## Components
+
+### Lib
+- [Glove](glove.h) - Glove communication.
+- [GUI](gui.h) - Graphical user interface.
+- [Live](live.h) - Live analysis backend.
+- [Midi](midi.h) - MIDI output.
+- [Pitch](pitch.h) - Pitch detection algorithms.
+
+### Bin
+- [Main](main.c) - Live pitch detection, visualization and MIDI output.
+- `*_test` - Various component tests.
+
+## Todo
+
+- Move onset / offset detection into [live.c](live.c).
