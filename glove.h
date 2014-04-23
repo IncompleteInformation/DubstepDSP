@@ -12,12 +12,12 @@
 #define _POSIX_SOURCE 1 /* POSIX compliant source */
 
 //sets up midi connection
-int serial_init();
+int glove_init();
 
-// Read data from serial device
+// Read data from glove device
 // Return the number of bytes read.
 //   output: the buffer to be populated with data (TODO: what length???)
-int serial_poll (int* output);
+int glove_poll (int* output);
 
-// Shut down serial connection
-void serial_close ();
+// Shut down glove connection
+void glove_close ();

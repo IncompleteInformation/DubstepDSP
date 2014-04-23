@@ -1,3 +1,10 @@
+// Live analysis backend
+//
+// The only input point is live_push_sample. The data source (either a simulated
+// WAV file or real microphone input) should call this function repeatedly from
+// a single thread. Output is written to globals which can be accessed (with no
+// guarantees of quality of consistency) from any thread.
+
 #include <fftw3.h>
 
 #define SAMPLE_RATE       44100.0

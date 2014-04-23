@@ -1,10 +1,10 @@
 #include <stdio.h>
-#include "serial.h"
+#include "glove.h"
 
 int main (void)
 {
     int ser_live;
-    ser_live = serial_init();
+    ser_live = glove_init();
     //if (!serfail) return 0;
     
     int len;
@@ -13,7 +13,7 @@ int main (void)
     {
         for (int i = 0; i<10000000; ++i)
         {
-            len = serial_poll(out);
+            len = glove_poll(out);
             for (int j = 0; j<len; ++j)
             {
                 printf("%i:", out[j]);
@@ -21,7 +21,7 @@ int main (void)
             printf("\n");
         }
         
-        serial_close();
+        glove_close();
     }
     printf("casual continue\n");
     return 1;

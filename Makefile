@@ -2,8 +2,8 @@ FLAGS=-O3
 
 default: bleep_test
 
-bleep: gui.c live.c main.c midi.c pitch.c serial.c
-	@cc ${FLAGS} gui.c live.c main.c midi.c pitch.c serial.c -o bleep \
+bleep: gui.c live.c main.c midi.c pitch.c glove.c
+	@cc ${FLAGS} gui.c live.c main.c midi.c pitch.c glove.c -o bleep \
 		-lfftw3 \
 		-lglfw3 \
 		-lportaudio \
@@ -15,6 +15,12 @@ bleep: gui.c live.c main.c midi.c pitch.c serial.c
 
 bleep_test: bleep
 	@./bleep
+
+glove: glove.c glove.h glove_test.c
+	@cc ${FLAGS} glove_test.c glove.c -o glove_test \
+
+glove_test: glove
+	@./glove_test
 
 midi: midi.c midi.h midi_test.c
 	@cc ${FLAGS} midi_test.c midi.c -o midi_test \
@@ -30,12 +36,6 @@ pitch: pitch.c pitch.h pitch_test.c
 
 pitch_test: pitch
 	@./pitch_test
-
-serial: serial.c serial.h serial_test.c
-	@cc ${FLAGS} serial_test.c serial.c -o serial_test \
-
-serial_test: serial
-	@./serial_test
 
 simulator: simulator.c
 	@cc ${FLAGS} simulator.c -o simulator \

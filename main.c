@@ -2,7 +2,7 @@
 #include "live.h"
 #include "pitch.h"
 #include "midi.h"
-#include "serial.h"
+#include "glove.h"
 
 // #define GLFW_INCLUDE_GLCOREARB
 #include <stdlib.h>
@@ -79,13 +79,13 @@ int main (void)
     // Initialize Midi
     midi_init();
     
-    // Initialize RS-232 connection to glove
+    // Initialize RS-232 connection to glove_
     int ser_live;
     int ser_buf[32];
     int ser_buf_loc;
     int midi_channel = 0;
-    int angle = 0; //the glove is held at an angle, since serial commands come in in pairs, we need to pick just one.
-    ser_live = serial_init();
+    int angle = 0; //the glove_ is held at an angle, since glove commands come in in pairs, we need to pick just one.
+    ser_live = glove_init();
 
     // Initialize PortAudio
     pa_check_error(Pa_Initialize());
@@ -133,7 +133,7 @@ int main (void)
         //SERIAL DATA HANDLING
         if (ser_live)
         {
-            ser_buf_loc = serial_poll(ser_buf);
+            ser_buf_loc = glove_poll(ser_buf);
             for (int i=0; i<ser_buf_loc; ++i)
             {
                 if (ser_buf[i]<0)

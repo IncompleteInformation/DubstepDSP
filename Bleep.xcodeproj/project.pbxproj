@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		0403A7F11900B68B00EB02A9 /* serial.c in Sources */ = {isa = PBXBuildFile; fileRef = 0403A7F01900B68B00EB02A9 /* serial.c */; };
+		0403A7F11900B68B00EB02A9 /* glove.c in Sources */ = {isa = PBXBuildFile; fileRef = 0403A7F01900B68B00EB02A9 /* glove.c */; };
 		046F405A18F52393002BC68A /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 046F405118F52393002BC68A /* main.c */; };
 		046F405D18F52393002BC68A /* pitch.c in Sources */ = {isa = PBXBuildFile; fileRef = 046F405618F52393002BC68A /* pitch.c */; };
 		046F406218F523E8002BC68A /* libfftw3.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 046F406118F523E8002BC68A /* libfftw3.a */; };
@@ -64,9 +64,9 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		0403A7EF1900B67200EB02A9 /* serial.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = serial.h; sourceTree = "<group>"; };
-		0403A7F01900B68B00EB02A9 /* serial.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = serial.c; sourceTree = "<group>"; };
-		0403A7F21900B6A700EB02A9 /* serial_test.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = serial_test.c; sourceTree = "<group>"; };
+		0403A7EF1900B67200EB02A9 /* glove.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = glove.h; sourceTree = "<group>"; };
+		0403A7F01900B68B00EB02A9 /* glove.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = glove.c; sourceTree = "<group>"; };
+		0403A7F21900B6A700EB02A9 /* glove_test.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = glove_test.c; sourceTree = "<group>"; };
 		046F405118F52393002BC68A /* main.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = main.c; sourceTree = "<group>"; };
 		046F405618F52393002BC68A /* pitch.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pitch.c; sourceTree = "<group>"; };
 		046F405718F52393002BC68A /* pitch.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pitch.h; sourceTree = "<group>"; };
@@ -150,9 +150,9 @@
 				046F405618F52393002BC68A /* pitch.c */,
 				046F405718F52393002BC68A /* pitch.h */,
 				CD4C4E0A18FBA8C7008E0329 /* pitch_test.c */,
-				0403A7EF1900B67200EB02A9 /* serial.h */,
-				0403A7F01900B68B00EB02A9 /* serial.c */,
-				0403A7F21900B6A700EB02A9 /* serial_test.c */,
+				0403A7EF1900B67200EB02A9 /* glove.h */,
+				0403A7F01900B68B00EB02A9 /* glove.c */,
+				0403A7F21900B6A700EB02A9 /* glove_test.c */,
 			);
 			name = Source;
 			sourceTree = "<group>";
@@ -292,7 +292,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				CDB29B7A18FCEBCE00A5FFB7 /* midi.c in Sources */,
-				0403A7F11900B68B00EB02A9 /* serial.c in Sources */,
+				0403A7F11900B68B00EB02A9 /* glove.c in Sources */,
 				046F405D18F52393002BC68A /* pitch.c in Sources */,
 				046F405A18F52393002BC68A /* main.c in Sources */,
 			);

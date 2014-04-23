@@ -18,7 +18,7 @@ struct termios oldtio,newtio;
 char buf[255];
 
 
-int serial_init()
+int glove_init()
 {
     fd = open(MODEMDEVICE, O_RDWR | O_NOCTTY );
     if (fd <0) {perror(MODEMDEVICE); return 0; }
@@ -41,7 +41,7 @@ int serial_init()
     return 1;
 }
 
-int serial_poll (int* output)
+int glove_poll (int* output)
 {
     res = read(fd,buf,255);   /* returns after 5 chars have been input */
     //printf(":");
@@ -54,7 +54,7 @@ int serial_poll (int* output)
     return res;
 }
 
-void serial_close ()
+void glove_close ()
 {
     tcsetattr(fd,TCSANOW,&oldtio);
 }
