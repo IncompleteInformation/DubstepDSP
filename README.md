@@ -1,3 +1,7 @@
+# Dubstep DSP
+
+![Pitch tracker](doc/screenshot-tracker.png)
+
 ## Dependencies
 Install [Homebrew](http://brew.sh) if you haven't already. Then:
 ```
