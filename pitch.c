@@ -6,6 +6,7 @@
 
 #define E 2.71828182845904523536028747135266249775724709369995
 
+
 void calc_fft (double* sample, fftw_complex* fft, double* tmp, size_t sample_size)
 {
     for (size_t i = 0; i < sample_size; ++i) tmp[i] = sample[i];
@@ -17,7 +18,7 @@ void calc_fft (double* sample, fftw_complex* fft, double* tmp, size_t sample_siz
 void calc_fft_mag (fftw_complex* fft, double* fft_mag, size_t sample_size)
 {
     for (size_t i = 0; i < sample_size/2+1; ++i)
-        fft_mag[i] = fft[i][0]*fft[i][0] + fft[i][1]*fft[i][1];
+        fft_mag[i] = (fft[i][0]*fft[i][0] + fft[i][1]*fft[i][1])/((sample_size/2)*(sample_size/2));
 }
 
 double dominant_freq (fftw_complex* fft, double* fft_mag, size_t sample_size, double sample_rate)
