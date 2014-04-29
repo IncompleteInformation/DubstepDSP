@@ -18,6 +18,7 @@
 		046F406B18F52A43002BC68A /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 046F406718F52A43002BC68A /* IOKit.framework */; };
 		046F406C18F52A43002BC68A /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 046F406818F52A43002BC68A /* OpenGL.framework */; };
 		046F406E18F52A56002BC68A /* libportaudio.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 046F406D18F52A56002BC68A /* libportaudio.a */; };
+		04C492C3190E3E5B005ABDA9 /* windowing.c in Sources */ = {isa = PBXBuildFile; fileRef = 04C492C2190E3E5B005ABDA9 /* windowing.c */; };
 		CD0A82C318FBA9CB00145912 /* libsndfile.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CD0A82C218FBA9CB00145912 /* libsndfile.a */; };
 		CD17F51C18FBA17A00A7FAC7 /* libportmidi.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = CD17F51B18FBA17A00A7FAC7 /* libportmidi.dylib */; };
 		CD4C4DFD18FBA87E008E0329 /* libfftw3.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 046F406118F523E8002BC68A /* libfftw3.a */; };
@@ -79,6 +80,8 @@
 		046F406718F52A43002BC68A /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = /System/Library/Frameworks/IOKit.framework; sourceTree = "<absolute>"; };
 		046F406818F52A43002BC68A /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = /System/Library/Frameworks/OpenGL.framework; sourceTree = "<absolute>"; };
 		046F406D18F52A56002BC68A /* libportaudio.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libportaudio.a; path = /usr/local/Cellar/portaudio/19.20111121/lib/libportaudio.a; sourceTree = "<absolute>"; };
+		04C492C2190E3E5B005ABDA9 /* windowing.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = windowing.c; sourceTree = "<group>"; };
+		04C492C5190E3E93005ABDA9 /* windowing.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = windowing.h; sourceTree = "<group>"; };
 		CD0A82C218FBA9CB00145912 /* libsndfile.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libsndfile.a; path = /Users/Calder/Developer/Bleep/../../../../usr/local/Cellar/libsndfile/1.0.25/lib/libsndfile.a; sourceTree = "<absolute>"; };
 		CD17F51B18FBA17A00A7FAC7 /* libportmidi.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libportmidi.dylib; path = /usr/local/Cellar/portmidi/217/lib/libportmidi.dylib; sourceTree = "<absolute>"; };
 		CD4C4E0A18FBA8C7008E0329 /* pitch_test.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pitch_test.c; sourceTree = "<group>"; };
@@ -146,6 +149,8 @@
 			isa = PBXGroup;
 			children = (
 				046F405118F52393002BC68A /* main.c */,
+				04C492C5190E3E93005ABDA9 /* windowing.h */,
+				04C492C2190E3E5B005ABDA9 /* windowing.c */,
 				CDB29B7718FCEBC300A5FFB7 /* midi_test.c */,
 				CDB29B6518FCEB7100A5FFB7 /* midi.c */,
 				CDB29B6618FCEB7100A5FFB7 /* midi.h */,
@@ -297,6 +302,7 @@
 			files = (
 				CDB29B7A18FCEBCE00A5FFB7 /* midi.c in Sources */,
 				0403A7F11900B68B00EB02A9 /* serial.c in Sources */,
+				04C492C3190E3E5B005ABDA9 /* windowing.c in Sources */,
 				046F405D18F52393002BC68A /* pitch.c in Sources */,
 				046F405A18F52393002BC68A /* main.c in Sources */,
 			);

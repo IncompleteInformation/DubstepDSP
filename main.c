@@ -1,6 +1,7 @@
 #include "pitch.h"
 #include "midi.h"
 #include "serial.h"
+#include "windowing.h"
 
 // #define GLFW_INCLUDE_GLCOREARB
 #include <stdlib.h>
@@ -17,11 +18,15 @@
 #define FFT_SIZE (1024) //512 = 11ms delay, 86Hz bins
 #define ONSET_FFT_SIZE (64)
 #define BIN_SIZE ((double) SAMPLE_RATE/FFT_SIZE)
-#define ONSET_THRESHOLD (.025)
-#define OFFSET_THRESHOLD (.015)
-#define RETRIG_THRESHOLD (.1)
+#define ONSET_THRESHOLD  (.0000625)
+#define OFFSET_THRESHOLD (ONSET_THRESHOLD/2)
+#define SPECTROGRAM_LENGTH (100)
+
+//#define RETRIG_THRESHOLD (.05)
 
 //fft generators et cetera
+int NOTE_ON = 0;
+int WINDOW_FUNCTION = 0;
 double fft_buffer[FFT_SIZE];
 double ONSET_FFT_BUFFER[ONSET_FFT_SIZE];
 int fft_buffer_loc;
@@ -30,6 +35,8 @@ fftw_complex fft_fft[(FFT_SIZE/2 +1)/2 +1];
 double fft_mag[FFT_SIZE/2 + 1];
 double fft_fft_mag[(FFT_SIZE/2+1)/2+1];
 double harmonics[FFT_SIZE/2+1];
+int spectrogram_buffer_loc;
+double spectrogram_buffer[SPECTROGRAM_LENGTH][FFT_SIZE/2+1];
 //fft analyzers
 double spectral_centroid;
 double dominant_frequency;
@@ -66,8 +73,31 @@ static void onKeyPress (GLFWwindow* window, int key, int scancode, int action, i
 {
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
         glfwSetWindowShouldClose(window, GL_TRUE);
+    if (key == GLFW_KEY_0 && action == GLFW_PRESS) WINDOW_FUNCTION = RECTANGLE;
+    if (key == GLFW_KEY_1 && action == GLFW_PRESS) WINDOW_FUNCTION = WELCH;
+    if (key == GLFW_KEY_2 && action == GLFW_PRESS) WINDOW_FUNCTION = HANNING;
+    if (key == GLFW_KEY_3 && action == GLFW_PRESS) WINDOW_FUNCTION = HAMMING;
+    if (key == GLFW_KEY_4 && action == GLFW_PRESS) WINDOW_FUNCTION = BLACKMAN;
+    if (key == GLFW_KEY_5 && action == GLFW_PRESS) WINDOW_FUNCTION = NUTTAL;
 }
 
+double xLogNormalize(double unscaled, double logMax)
+{
+    return log10(unscaled)/logMax;
+}
+double dbNormalize(double magnitude, double max_magnitude, double dbRange)
+{
+    double absDb = 10*log10(magnitude/max_magnitude); //between -inf and 0
+    return (dbRange+absDb)/dbRange; //between 0 and 1
+}
+void update_spectrogram_buffer(){
+    for (int i = 0; i<FFT_SIZE/2+1; ++i)
+    {
+        if (NOTE_ON) spectrogram_buffer[spectrogram_buffer_loc][i] = dbNormalize(fft_mag[i], 1, 96);
+        else spectrogram_buffer[spectrogram_buffer_loc][i] = 0;
+    }
+    spectrogram_buffer_loc = (spectrogram_buffer_loc+1)%SPECTROGRAM_LENGTH;
+}
 static void update_fft_buffer(float mic_bit)
 {
     onset_fft_buffer[onset_fft_buffer_loc] = mic_bit;
@@ -81,7 +111,8 @@ static void update_fft_buffer(float mic_bit)
             onset_average_amplitude = calc_avg_amplitude(onset_fft_mag, ONSET_FFT_SIZE, SAMPLE_RATE, 0, SAMPLE_RATE/2);
         }
     //stall calculations of large ffts until onset is detected. This will currently cancel the last 25ms of a transform that with p>.5, should happen. IDC right now. Mechanism is to reset fft_buffer_loc back to the beginning.
-    if (onset_average_amplitude<ONSET_THRESHOLD) fft_buffer_loc = 0;
+    if (onset_average_amplitude<ONSET_THRESHOLD && !NOTE_ON) fft_buffer_loc = 0;
+    if (onset_average_amplitude<OFFSET_THRESHOLD && NOTE_ON) {fft_buffer_loc = 0;}
     fft_buffer[fft_buffer_loc] = mic_bit;
     ++fft_buffer_loc;
     if (fft_buffer_loc==FFT_SIZE)
@@ -91,6 +122,20 @@ static void update_fft_buffer(float mic_bit)
 //            double tmp2[FFT_SIZE/2 + 1];
             calc_fft(fft_buffer, fft, tmp, FFT_SIZE);
             calc_fft_mag(fft, fft_mag, FFT_SIZE);
+            switch (WINDOW_FUNCTION) {
+                case WELCH:
+                    welch_window(fft_mag, FFT_SIZE/2+1, fft_mag); break;
+                case HANNING:
+                    hanning_window(fft_mag, FFT_SIZE/2+1, fft_mag); break;
+                case HAMMING:
+                    hamming_window(fft_mag, FFT_SIZE/2+1, fft_mag); break;
+                case BLACKMAN:
+                    blackman_window(fft_mag, FFT_SIZE/2+1, fft_mag); break;
+                case NUTTAL:
+                    nuttal_window(fft_mag, FFT_SIZE/2+1, fft_mag); break;
+                default:
+                    break;
+            }
             //calc_fft(fft_mag, fft_fft, tmp2, FFT_SIZE/2 +1);
             //calc_fft_mag(fft_fft, fft_fft_mag, FFT_SIZE/2 + 1);
             dominant_frequency = 0; //dominant_freq(fft, fft_mag, FFT_SIZE, SAMPLE_RATE);
@@ -99,11 +144,13 @@ static void update_fft_buffer(float mic_bit)
             average_amplitude = calc_avg_amplitude(fft_mag, FFT_SIZE, SAMPLE_RATE, 0, FFT_SIZE/2);
             spectral_crest = 0; //calc_spectral_crest(fft_mag, FFT_SIZE, SAMPLE_RATE);
             spectral_flatness = 0; //calc_spectral_flatness(fft_mag, FFT_SIZE, SAMPLE_RATE, 0, SAMPLE_RATE/2);
-            harmonic_average = calc_harmonics(fft, fft_mag, FFT_SIZE, SAMPLE_RATE); //useless and computationally intensive
+            harmonic_average = 0; //calc_harmonics(fft, fft_mag, FFT_SIZE, SAMPLE_RATE); //useless and computationally intensive
             
             //onset fft settings and calculations
             
+            update_spectrogram_buffer();
         }
+
 }
 static int onAudioSync (const void* inputBuffer, void* outputBuffer,
                         unsigned long framesPerBuffer,
@@ -125,15 +172,79 @@ static int onAudioSync (const void* inputBuffer, void* outputBuffer,
     return paContinue;
 }
 
-double xLogNormalize(double unscaled, double logMax)
-{
-    return log10(unscaled)/logMax;
+// GRAPHICS FUNCTIONS
+void graph_log_lines(double aspectRatio){
+    //log lines
+    glBegin(GL_LINES);
+    int j = 0;
+    int k = 10;
+    double logLogLinesX = log10(SAMPLE_RATE/2);
+    while(j<(SAMPLE_RATE/2))
+    {
+        glColor3f(0.6f,0.4f,0.1f);
+        double logJ = xLogNormalize((double)j, logLogLinesX);
+        glVertex3f(aspectRatio*(2*logJ-1), -1, 0.f);
+        glVertex3f(aspectRatio*(2*logJ-1), 1, 0.f);
+        j+=k;
+        if (j==k*10) k*=10;
+    }
+    glEnd();
 }
-double dbNormalize(double magnitude, double max_magnitude, double dbRange)
-{
-    double absDb = 10*log10(magnitude/max_magnitude); //between -inf and 0
-    return (dbRange+absDb)/dbRange; //between 0 and 1
+void graph_fft_mag(int dbRange, double aspectRatio){
+    //fft_mag graph (db, log)
+    glBegin(GL_LINE_STRIP);
+    glColor3f(1.0f,0.0f,1.0f);
+    double logMax = log10(SAMPLE_RATE/2);
+    for (int i = 0; i < FFT_SIZE/2+1; ++i)
+    {
+        double logI = xLogNormalize(i*BIN_SIZE, logMax);
+        double scaledMag = dbNormalize(fft_mag[i], 1, dbRange); //max amplitude is FFT_SIZE/2)^2
+        glVertex3f(2*aspectRatio*logI-aspectRatio, 2*scaledMag-1, 0.f);
+    }
+    glEnd();
 }
+void graph_spectral_centroid(double aspectRatio){
+    //specral centroid marker
+    glBegin(GL_LINES);
+    glColor3f(1.f, 0.f, 0.f);
+    double logCentroid = log10(spectral_centroid)*(SAMPLE_RATE/2)/log10(SAMPLE_RATE/2+1);
+    glVertex3f(2*aspectRatio*logCentroid/(SAMPLE_RATE/2)-aspectRatio, -1, 0.f);
+    glVertex3f(2*aspectRatio*logCentroid/(SAMPLE_RATE/2)-aspectRatio, 1, 0.f);
+    glEnd();
+}
+void graph_dominant_pitch_lp(double aspectRatio){
+    //dominant pitch line (lowpassed)
+    glBegin(GL_LINES);
+    glColor3f(0.f, 1.f, 1.f);
+    double domlogMax = log10(SAMPLE_RATE/2);
+    double logNormDomFreq_lp = xLogNormalize(dominant_frequency_lp, domlogMax);
+    glVertex3f(aspectRatio*(2*logNormDomFreq_lp-1), -1, 0.f);
+    glVertex3f(aspectRatio*(2*logNormDomFreq_lp-1), 1, 0.f);
+    glEnd();
+}
+void graph_spectrogram(int dbRange, double aspectRatio){
+    double logMax = log10(SAMPLE_RATE/2);
+    for (int i = 0; i<SPECTROGRAM_LENGTH; ++i)
+    {
+        double curXLeft  = aspectRatio * (2 * (double)i/SPECTROGRAM_LENGTH - 1);
+        double curXRight = aspectRatio * (2 * (double)(i+1)/SPECTROGRAM_LENGTH -1);
+        glBegin(GL_QUAD_STRIP);
+        glVertex3f(curXLeft , -1, 0);
+        glVertex3f(curXRight, -1, 0);
+        for (int j = 1; j<FFT_SIZE/2+1; ++j)
+        {
+            //draw QUAD for each bin?
+            double logJ  = xLogNormalize(j*BIN_SIZE, logMax);
+            double curYTop = 2*logJ-1;
+            double scaledMag = spectrogram_buffer[(i+spectrogram_buffer_loc)%SPECTROGRAM_LENGTH][j];
+            glColor3f(scaledMag, scaledMag, scaledMag);
+            glVertex3f(curXLeft, curYTop, 0.f);
+            glVertex3f(curXRight, curYTop, 0.f);
+        }
+        glEnd();
+    }
+}
+
 int main (void)
 {
     fft_buffer_loc = 0;
@@ -208,7 +319,6 @@ int main (void)
     
     float aspectRatio;
     int width, height;
-    int note_on = 0;
     int pitchTrackerListSize = 256;
     float pitchTrackerList[pitchTrackerListSize];
     while (!glfwWindowShouldClose(mainWindow))
@@ -229,63 +339,14 @@ int main (void)
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
         
-        //log lines
-        glBegin(GL_LINES);
-        int j = 0;
-        int k = 10;
-        double logLogLinesX = log10(SAMPLE_RATE/2);
-        while(j<(SAMPLE_RATE/2))
-        {
-            glColor3f(0.6f,0.4f,0.1f);
-            double logJ = xLogNormalize((double)j, logLogLinesX);
-            glVertex3f(aspectRatio*(2*logJ-1), -1, 0.f);
-            glVertex3f(aspectRatio*(2*logJ-1), 1, 0.f);
-            j+=k;
-            if (j==k*10) k*=10;
-        }
-        glEnd();
+////        graph_log_lines(aspectRatio);
+////        graph_fft_mag(dbRange, aspectRatio);
+////        graph_spectral_centroid(aspectRatio);
+////        graph_dominant_pitch_lp(aspectRatio);
+//        graph_spectrogram(dbRange, aspectRatio);
         
-        //fft_mag graph (db, log)
-        glBegin(GL_LINE_STRIP);
-        glColor3f(1.0f,0.0f,1.0f);
-        double logMax = log10(SAMPLE_RATE/2);
-        for (int i = 0; i < FFT_SIZE/2+1; ++i)
-        {
-            double logI = xLogNormalize(i*BIN_SIZE, logMax);
-            double scaledMag = dbNormalize(fft_mag[i], 1, dbRange); //max amplitude is FFT_SIZE/2)^2
-            glVertex3f(2*aspectRatio*logI-aspectRatio, 2*scaledMag-1, 0.f);
-        }
-        glEnd();
-        
-        //specral centroid marker
-        glBegin(GL_LINES);
-        glColor3f(1.f, 0.f, 0.f);
-        double logCentroid = log10(spectral_centroid)*(SAMPLE_RATE/2)/log10(SAMPLE_RATE/2+1);
-        glVertex3f(2*aspectRatio*logCentroid/(SAMPLE_RATE/2)-aspectRatio, -1, 0.f);
-        glVertex3f(2*aspectRatio*logCentroid/(SAMPLE_RATE/2)-aspectRatio, 1, 0.f);
-        glEnd();
-        
-//        //dominant pitch line
-//        glBegin(GL_LINES);
-//        glColor3f(0.f, 1.f, 0.f);
-//        logMax = log10(SAMPLE_RATE/2);
-//        double logNormDomFreq = xLogNormalize(dominant_frequency, logMax);
-//        glVertex3f(aspectRatio*(2*logNormDomFreq-1), -1, 0.f);
-//        glVertex3f(aspectRatio*(2*logNormDomFreq-1), 1, 0.f);
-//        glEnd();
-        
-        //dominant pitch line (lowpassed)
-        glBegin(GL_LINES);
-        glColor3f(0.f, 1.f, 1.f);
-        double domlogMax = log10(SAMPLE_RATE/2);
-        double logNormDomFreq_lp = xLogNormalize(dominant_frequency_lp, domlogMax);
-        glVertex3f(aspectRatio*(2*logNormDomFreq_lp-1), -1, 0.f);
-        glVertex3f(aspectRatio*(2*logNormDomFreq_lp-1), 1, 0.f);
-        glEnd();
-
-        glfwSwapBuffers(mainWindow);
-        glfwPollEvents();
-
+//        glfwSwapBuffers(mainWindow);
+//        glfwPollEvents();
         
         //SERIAL DATA HANDLING
         if (ser_live)
@@ -299,7 +360,7 @@ int main (void)
                     {
                         midi_channel = ser_buf[i]+128;
                         midi_NOFF(); // clear all notes
-                        note_on = 0;
+                        NOTE_ON = 0;
                     }
                 }
                 else angle = ser_buf[i];
@@ -308,10 +369,11 @@ int main (void)
         //MIDI OUT STATEMENTS
         int outputPitch = -INFINITY;
         if (onset_average_amplitude>ONSET_THRESHOLD){
-            if (!note_on)
+            if (!NOTE_ON)
             {
                 midi_write(Pm_Message(0x90|midi_channel, 54, 100/*(int)average_amplitude*/));
-                note_on = 1;
+                printf("midi on\n");
+                NOTE_ON = 1;
             }
             //0x2000 is 185 hz, 0x0000 is 73.416, 0x3fff is 466.16
             double midiNumber = 12 * log2(dominant_frequency_lp/440) + 69;
@@ -321,7 +383,7 @@ int main (void)
             if (outputPitch < 0x0000) outputPitch = 0x0000;
             int lsb_7 = outputPitch&0x7F;
             int msb_7 = (outputPitch>>7)&0x7F;
-            int outputCentroid = (int)((spectral_centroid-400)/400*127);
+            int outputCentroid = (int)((spectral_centroid-400)/300*127);
             if (outputCentroid > 127) outputCentroid = 127;
             if (outputCentroid < 000) outputCentroid = 000;
             
@@ -330,11 +392,11 @@ int main (void)
             midi_write(Pm_Message(0xE0|midi_channel, lsb_7, msb_7));
         }
         else if (onset_average_amplitude<OFFSET_THRESHOLD){
-            if (note_on) {
+            if (NOTE_ON) {
                 midi_write(Pm_Message(0x80|midi_channel, 54, 100));
-                note_on = 0;
+                printf("midi off\n");
+                NOTE_ON = 0;
             }
-            //midi_write(Pm_Message(0x80|midi_channel, 54, 100));
             outputPitch = -INFINITY;
         }
         midi_flush();
@@ -358,64 +420,64 @@ int main (void)
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
         
-        //log lines
-        glBegin(GL_LINES);
-        for (int i = 0; i<36; ++i)
-        {
-            glColor3f(0.9f,0.7f,0.5f);
-            glVertex3f(aspectRatio*-1, 2*(i/36.f)-1, 0.f);
-            glVertex3f(aspectRatio, 2*(i/36.f)-1, 0.f);
-        }
-        glEnd();
-
-        for (int i = 1; i < pitchTrackerListSize; ++i)
-        {
-            pitchTrackerList[i] = pitchTrackerList[i+1];
-        }
-        pitchTrackerList[pitchTrackerListSize-1] = (float)outputPitch/0x3FFF;
+//        //pitch lines
+//        glBegin(GL_LINES);
+//        for (int i = 0; i<36; ++i)
+//        {
+//            glColor3f(0.9f,0.7f,0.5f);
+//            glVertex3f(aspectRatio*-1, 2*(i/36.f)-1, 0.f);
+//            glVertex3f(aspectRatio, 2*(i/36.f)-1, 0.f);
+//        }
+//        glEnd();
+//
+//        for (int i = 1; i < pitchTrackerListSize; ++i)
+//        {
+//            pitchTrackerList[i] = pitchTrackerList[i+1];
+//        }
+//        pitchTrackerList[pitchTrackerListSize-1] = (float)outputPitch/0x3FFF;
+//        
+//        glBegin(GL_LINES);
+//        glColor3f(0.f, 0.f, 0.1f);
+//        for (int i = 0; i < pitchTrackerListSize; ++i)
+//        {
+//            float xPos1 = aspectRatio*((2*i/(float)pitchTrackerListSize)-1);
+//            float xPos2 = aspectRatio*((2*(i+1)/(float)pitchTrackerListSize)-1);
+//            float yPos = 2*pitchTrackerList[i]-1;
+//            glVertex3f(xPos1, yPos, 0.f);
+//            glVertex3f(xPos2, yPos, 0.f);
+//        }
+//        glEnd();
+//        
+//        glBegin(GL_LINES);
+//        for (int i = 0; i < pitchTrackerListSize; ++i)
+//        {
+//            if (i!=0)
+//            {
+//                if ((pitchTrackerList[i-1] < 0) & (pitchTrackerList[i]>=0))
+//                {
+//                    float xPos = aspectRatio*((2*i/(float)pitchTrackerListSize)-1);
+//                    glColor3f(0.0f, 0.3f, 0.0f);
+//                    glVertex3f(xPos, -1, 0.f);
+//                    glVertex3f(xPos, 1, 0.f);
+//                }
+//            }
+//            if (i!=pitchTrackerListSize)
+//            {
+//                if ((pitchTrackerList[i+1] < 0) & (pitchTrackerList[i]>=0))
+//                {
+//                    float xPos = aspectRatio*((2*i/(float)pitchTrackerListSize)-1);
+//                    glColor3f(0.3f, 0.0f, 0.0f);
+//                    glVertex3f(xPos, -1, 0.f);
+//                    glVertex3f(xPos, 1, 0.f);
+//                }
+//            }
+//
+//        }
+//        glEnd();
         
-        glBegin(GL_LINES);
-        glColor3f(0.f, 0.f, 0.1f);
-        for (int i = 0; i < pitchTrackerListSize; ++i)
-        {
-            float xPos1 = aspectRatio*((2*i/(float)pitchTrackerListSize)-1);
-            float xPos2 = aspectRatio*((2*(i+1)/(float)pitchTrackerListSize)-1);
-            float yPos = 2*pitchTrackerList[i]-1;
-            glVertex3f(xPos1, yPos, 0.f);
-            glVertex3f(xPos2, yPos, 0.f);
-        }
-        glEnd();
         
-        glBegin(GL_LINES);
-        for (int i = 0; i < pitchTrackerListSize; ++i)
-        {
-            if (i!=0)
-            {
-                if ((pitchTrackerList[i-1] < 0) & (pitchTrackerList[i]>=0))
-                {
-                    float xPos = aspectRatio*((2*i/(float)pitchTrackerListSize)-1);
-                    glColor3f(0.0f, 0.3f, 0.0f);
-                    glVertex3f(xPos, -1, 0.f);
-                    glVertex3f(xPos, 1, 0.f);
-                }
-            }
-            if (i!=pitchTrackerListSize)
-            {
-                if ((pitchTrackerList[i+1] < 0) & (pitchTrackerList[i]>=0))
-                {
-                    float xPos = aspectRatio*((2*i/(float)pitchTrackerListSize)-1);
-                    glColor3f(0.3f, 0.0f, 0.0f);
-                    glVertex3f(xPos, -1, 0.f);
-                    glVertex3f(xPos, 1, 0.f);
-                }
-            }
-
-        }
-        glEnd();
-        
-        
-        glfwSwapBuffers(trackerWindow);
-        glfwPollEvents();
+//        glfwSwapBuffers(trackerWindow);
+//        glfwPollEvents();
         
 
         
@@ -427,9 +489,9 @@ int main (void)
         //        printf("full_spectrum_flatness: %f\n", spectral_flatness);
         //        printf("low_passed_dom_freq : %f\n", dominant_frequency_lp);
         //        printf("first 8 bins: %06.2f %06.2f %06.2f %06.2f %06.2f %06.2f %06.2f %06.2f\n", fft_mag[0], fft_mag[1], fft_mag[2], fft_mag[3], fft_mag[4], fft_mag[5], fft_mag[6], fft_mag[7]);
-        //        printf("onset amplitude: %f\n",onset_average_amplitude);
+//        printf("onset amplitude: %f\n",onset_average_amplitude);
 //            printf("harmonic average vs. lp_pitch: %f %f\n", harmonic_average, dominant_frequency_lp);
-        printf("midi channel, angle: %i\t %i\n",midi_channel, angle);
+//        printf("midi channel, angle: %i\t %i\n",midi_channel, angle);
     }
     
     
