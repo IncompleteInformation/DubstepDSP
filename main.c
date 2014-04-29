@@ -18,7 +18,7 @@
 #define FFT_SIZE (1024) //512 = 11ms delay, 86Hz bins
 #define ONSET_FFT_SIZE (64)
 #define BIN_SIZE ((double) SAMPLE_RATE/FFT_SIZE)
-#define ONSET_THRESHOLD  (.0000625)
+#define ONSET_THRESHOLD  (.00003125)
 #define OFFSET_THRESHOLD (ONSET_THRESHOLD/2)
 #define SPECTROGRAM_LENGTH (100)
 
@@ -39,6 +39,8 @@ int spectrogram_buffer_loc;
 double spectrogram_buffer[SPECTROGRAM_LENGTH][FFT_SIZE/2+1];
 //fft analyzers
 double spectral_centroid;
+double prev_spectral_centroid = -INFINITY;
+double prev_output_pitch = -INFINITY;
 double dominant_frequency;
 double dominant_frequency_lp;
 double average_amplitude;
@@ -381,14 +383,32 @@ int main (void)
             outputPitch = (int)((midiNumber-38)/32*0x3FFF);
             if (outputPitch > 0x3FFF) outputPitch = 0x3FFF;
             if (outputPitch < 0x0000) outputPitch = 0x0000;
-            int lsb_7 = outputPitch&0x7F;
-            int msb_7 = (outputPitch>>7)&0x7F;
+
             int outputCentroid = (int)((spectral_centroid-400)/300*127);
             if (outputCentroid > 127) outputCentroid = 127;
             if (outputCentroid < 000) outputCentroid = 000;
+            if (prev_spectral_centroid != -INFINITY){
+                if (abs(outputCentroid-prev_spectral_centroid)>127){
+                    outputCentroid = prev_spectral_centroid;
+                }
+                else prev_spectral_centroid = outputCentroid;
+            }
+            else prev_spectral_centroid = outputCentroid;
+            
+            if (prev_output_pitch != -INFINITY){
+                if ((outputPitch == 0) || (outputPitch == 0x3FFF)){
+                    outputPitch = prev_output_pitch;
+                }
+                else prev_output_pitch = outputPitch;
+            }
+            else prev_output_pitch = outputPitch;
+            int lsb_7 = outputPitch&0x7F;
+            int msb_7 = (outputPitch>>7)&0x7F;
+
             
             if (ser_live) midi_write(Pm_Message(0xB0/*|midi_channel*/, 0, angle));
             midi_write(Pm_Message(0xB0/*|midi_channel*/, 1, outputCentroid));
+            printf("centroid out: %03u pitch out: %04u\n", outputCentroid, outputPitch);
             midi_write(Pm_Message(0xE0|midi_channel, lsb_7, msb_7));
         }
         else if (onset_average_amplitude<OFFSET_THRESHOLD){
@@ -396,6 +416,8 @@ int main (void)
                 midi_write(Pm_Message(0x80|midi_channel, 54, 100));
                 printf("midi off\n");
                 NOTE_ON = 0;
+                prev_spectral_centroid = -INFINITY;
+                prev_output_pitch = -INFINITY;
             }
             outputPitch = -INFINITY;
         }
