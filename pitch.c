@@ -63,7 +63,7 @@ double dominant_freq_lp (fftw_complex* fft, double* fft_mag, size_t sample_size,
     double threshold = .125;
     for (size_t i = 1; i<num_bins; ++i)
     {
-        if ((normalized[i]>normalized[i-1]) && (normalized[i]>threshold*max))
+        if ((normalized[i]>normalized[i-1]) && (normalized[i]>threshold))
         {
             if (normalized[i+1]>normalized[i])
             {

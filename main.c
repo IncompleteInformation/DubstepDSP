@@ -344,11 +344,11 @@ int main (void)
 ////        graph_log_lines(aspectRatio);
 ////        graph_fft_mag(dbRange, aspectRatio);
 ////        graph_spectral_centroid(aspectRatio);
-////        graph_dominant_pitch_lp(aspectRatio);
-//        graph_spectrogram(dbRange, aspectRatio);
+//        graph_dominant_pitch_lp(aspectRatio);
+        graph_spectrogram(dbRange, aspectRatio);
         
-//        glfwSwapBuffers(mainWindow);
-//        glfwPollEvents();
+        glfwSwapBuffers(mainWindow);
+        glfwPollEvents();
         
         //SERIAL DATA HANDLING
         if (ser_live)
@@ -384,7 +384,7 @@ int main (void)
             if (outputPitch > 0x3FFF) outputPitch = 0x3FFF;
             if (outputPitch < 0x0000) outputPitch = 0x0000;
 
-            int outputCentroid = (int)((spectral_centroid-400)/300*127);
+            int outputCentroid = (int)((spectral_centroid-500)/300*127);
             if (outputCentroid > 127) outputCentroid = 127;
             if (outputCentroid < 000) outputCentroid = 000;
             if (prev_spectral_centroid != -INFINITY){
@@ -442,64 +442,64 @@ int main (void)
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
         
-//        //pitch lines
-//        glBegin(GL_LINES);
-//        for (int i = 0; i<36; ++i)
-//        {
-//            glColor3f(0.9f,0.7f,0.5f);
-//            glVertex3f(aspectRatio*-1, 2*(i/36.f)-1, 0.f);
-//            glVertex3f(aspectRatio, 2*(i/36.f)-1, 0.f);
-//        }
-//        glEnd();
-//
-//        for (int i = 1; i < pitchTrackerListSize; ++i)
-//        {
-//            pitchTrackerList[i] = pitchTrackerList[i+1];
-//        }
-//        pitchTrackerList[pitchTrackerListSize-1] = (float)outputPitch/0x3FFF;
-//        
-//        glBegin(GL_LINES);
-//        glColor3f(0.f, 0.f, 0.1f);
-//        for (int i = 0; i < pitchTrackerListSize; ++i)
-//        {
-//            float xPos1 = aspectRatio*((2*i/(float)pitchTrackerListSize)-1);
-//            float xPos2 = aspectRatio*((2*(i+1)/(float)pitchTrackerListSize)-1);
-//            float yPos = 2*pitchTrackerList[i]-1;
-//            glVertex3f(xPos1, yPos, 0.f);
-//            glVertex3f(xPos2, yPos, 0.f);
-//        }
-//        glEnd();
-//        
-//        glBegin(GL_LINES);
-//        for (int i = 0; i < pitchTrackerListSize; ++i)
-//        {
-//            if (i!=0)
-//            {
-//                if ((pitchTrackerList[i-1] < 0) & (pitchTrackerList[i]>=0))
-//                {
-//                    float xPos = aspectRatio*((2*i/(float)pitchTrackerListSize)-1);
-//                    glColor3f(0.0f, 0.3f, 0.0f);
-//                    glVertex3f(xPos, -1, 0.f);
-//                    glVertex3f(xPos, 1, 0.f);
-//                }
-//            }
-//            if (i!=pitchTrackerListSize)
-//            {
-//                if ((pitchTrackerList[i+1] < 0) & (pitchTrackerList[i]>=0))
-//                {
-//                    float xPos = aspectRatio*((2*i/(float)pitchTrackerListSize)-1);
-//                    glColor3f(0.3f, 0.0f, 0.0f);
-//                    glVertex3f(xPos, -1, 0.f);
-//                    glVertex3f(xPos, 1, 0.f);
-//                }
-//            }
-//
-//        }
-//        glEnd();
+        //pitch lines
+        glBegin(GL_LINES);
+        for (int i = 0; i<36; ++i)
+        {
+            glColor3f(0.9f,0.7f,0.5f);
+            glVertex3f(aspectRatio*-1, 2*(i/36.f)-1, 0.f);
+            glVertex3f(aspectRatio, 2*(i/36.f)-1, 0.f);
+        }
+        glEnd();
+        
+        for (int i = 1; i < pitchTrackerListSize; ++i)
+        {
+            pitchTrackerList[i] = pitchTrackerList[i+1];
+        }
+        pitchTrackerList[pitchTrackerListSize-1] = (float)outputPitch/0x3FFF;
+        
+        glBegin(GL_LINES);
+        glColor3f(0.f, 0.f, 0.1f);
+        for (int i = 0; i < pitchTrackerListSize; ++i)
+        {
+            float xPos1 = aspectRatio*((2*i/(float)pitchTrackerListSize)-1);
+            float xPos2 = aspectRatio*((2*(i+1)/(float)pitchTrackerListSize)-1);
+            float yPos = 2*pitchTrackerList[i]-1;
+            glVertex3f(xPos1, yPos, 0.f);
+            glVertex3f(xPos2, yPos, 0.f);
+        }
+        glEnd();
+        
+        glBegin(GL_LINES);
+        for (int i = 0; i < pitchTrackerListSize; ++i)
+        {
+            if (i!=0)
+            {
+                if ((pitchTrackerList[i-1] < 0) & (pitchTrackerList[i]>=0))
+                {
+                    float xPos = aspectRatio*((2*i/(float)pitchTrackerListSize)-1);
+                    glColor3f(0.0f, 0.3f, 0.0f);
+                    glVertex3f(xPos, -1, 0.f);
+                    glVertex3f(xPos, 1, 0.f);
+                }
+            }
+            if (i!=pitchTrackerListSize)
+            {
+                if ((pitchTrackerList[i+1] < 0) & (pitchTrackerList[i]>=0))
+                {
+                    float xPos = aspectRatio*((2*i/(float)pitchTrackerListSize)-1);
+                    glColor3f(0.3f, 0.0f, 0.0f);
+                    glVertex3f(xPos, -1, 0.f);
+                    glVertex3f(xPos, 1, 0.f);
+                }
+            }
+            
+        }
+        glEnd();
         
         
-//        glfwSwapBuffers(trackerWindow);
-//        glfwPollEvents();
+        glfwSwapBuffers(trackerWindow);
+        glfwPollEvents();
         
 
         
