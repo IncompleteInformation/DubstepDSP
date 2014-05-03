@@ -258,8 +258,8 @@ int main (void)
     
     // Initialize RS-232 connection to glove
     int ser_live;
-    int ser_buf[32];
-    int ser_buf_loc;
+    int ser_buf_size = 256;
+    char ser_buf[ser_buf_size];
     int midi_channel = 0;
     int angle = 0; //the glove is held at an angle, since serial commands come in in pairs, we need to pick just one.
     ser_live = serial_init();
@@ -321,8 +321,8 @@ int main (void)
     
     float aspectRatio;
     int width, height;
-    int pitchTrackerListSize = 256;
-    float pitchTrackerList[pitchTrackerListSize];
+    size_t pitchTrackerListSize = 128;
+    double pitchTrackerList[pitchTrackerListSize];
     while (!glfwWindowShouldClose(mainWindow))
     {
         glfwMakeContextCurrent(mainWindow);
@@ -345,16 +345,16 @@ int main (void)
 ////        graph_fft_mag(dbRange, aspectRatio);
 ////        graph_spectral_centroid(aspectRatio);
 //        graph_dominant_pitch_lp(aspectRatio);
-//        graph_spectrogram(dbRange, aspectRatio);
+        graph_spectrogram(dbRange, aspectRatio);
         
-//        glfwSwapBuffers(mainWindow);
-//        glfwPollEvents();
+        glfwSwapBuffers(mainWindow);
+        glfwPollEvents();
         
         //SERIAL DATA HANDLING
         if (ser_live)
         {
-            ser_buf_loc = serial_poll(ser_buf);
-            for (int i=0; i<ser_buf_loc; ++i)
+            size_t bytes_read = serial_poll(ser_buf, ser_buf_size);
+            for (int i = 0; i < bytes_read; ++i)
             {
                 if (ser_buf[i]<0)
                 {
@@ -408,7 +408,7 @@ int main (void)
             
             if (ser_live) midi_write(Pm_Message(0xB0/*|midi_channel*/, 0, angle));
             midi_write(Pm_Message(0xB0/*|midi_channel*/, 1, outputCentroid));
-            printf("centroid out: %03u pitch out: %04u\n", outputCentroid, outputPitch);
+//            printf("centroid out: %03u pitch out: %04u\n", outputCentroid, outputPitch);
             midi_write(Pm_Message(0xE0|midi_channel, lsb_7, msb_7));
         }
         else if (onset_average_amplitude<OFFSET_THRESHOLD){
@@ -424,82 +424,82 @@ int main (void)
         midi_flush();
         
 //        //PITCH TRACKING WINDOW
-//        glfwMakeContextCurrent(trackerWindow);
-//        glfwSetKeyCallback(trackerWindow, onKeyPress);
-//        
-//        glfwGetFramebufferSize(trackerWindow, &width, &height);
-//        aspectRatio = width / (float) height;
-//        
-//        glViewport(0, 0, width, height);
-//        glClear(GL_COLOR_BUFFER_BIT);
-//        
-//        glClearColor(1, 1, 1, 1);
-//        
-//        glMatrixMode(GL_PROJECTION);
-//        glLoadIdentity();
-//        glOrtho(-aspectRatio, aspectRatio, -1.f, 1.f, 1.f, -1.f);
-//        
-//        glMatrixMode(GL_MODELVIEW);
-//        glLoadIdentity();
-//        
-//        //pitch lines
-//        glBegin(GL_LINES);
-//        for (int i = 0; i<36; ++i)
-//        {
-//            glColor3f(0.9f,0.7f,0.5f);
-//            glVertex3f(aspectRatio*-1, 2*(i/36.f)-1, 0.f);
-//            glVertex3f(aspectRatio, 2*(i/36.f)-1, 0.f);
-//        }
-//        glEnd();
-//        
-//        for (int i = 1; i < pitchTrackerListSize; ++i)
-//        {
-//            pitchTrackerList[i] = pitchTrackerList[i+1];
-//        }
-//        pitchTrackerList[pitchTrackerListSize-1] = (float)outputPitch/0x3FFF;
-//        
-//        glBegin(GL_LINES);
-//        glColor3f(0.f, 0.f, 0.1f);
-//        for (int i = 0; i < pitchTrackerListSize; ++i)
-//        {
-//            float xPos1 = aspectRatio*((2*i/(float)pitchTrackerListSize)-1);
-//            float xPos2 = aspectRatio*((2*(i+1)/(float)pitchTrackerListSize)-1);
-//            float yPos = 2*pitchTrackerList[i]-1;
-//            glVertex3f(xPos1, yPos, 0.f);
-//            glVertex3f(xPos2, yPos, 0.f);
-//        }
-//        glEnd();
-//        
-//        glBegin(GL_LINES);
-//        for (int i = 0; i < pitchTrackerListSize; ++i)
-//        {
-//            if (i!=0)
-//            {
-//                if ((pitchTrackerList[i-1] < 0) & (pitchTrackerList[i]>=0))
-//                {
-//                    float xPos = aspectRatio*((2*i/(float)pitchTrackerListSize)-1);
-//                    glColor3f(0.0f, 0.3f, 0.0f);
-//                    glVertex3f(xPos, -1, 0.f);
-//                    glVertex3f(xPos, 1, 0.f);
-//                }
-//            }
-//            if (i!=pitchTrackerListSize)
-//            {
-//                if ((pitchTrackerList[i+1] < 0) & (pitchTrackerList[i]>=0))
-//                {
-//                    float xPos = aspectRatio*((2*i/(float)pitchTrackerListSize)-1);
-//                    glColor3f(0.3f, 0.0f, 0.0f);
-//                    glVertex3f(xPos, -1, 0.f);
-//                    glVertex3f(xPos, 1, 0.f);
-//                }
-//            }
-//            
-//        }
-//        glEnd();
+        glfwMakeContextCurrent(trackerWindow);
+        glfwSetKeyCallback(trackerWindow, onKeyPress);
+
+        glfwGetFramebufferSize(trackerWindow, &width, &height);
+        aspectRatio = width / (float) height;
         
+        glViewport(0, 0, width, height);
+        glClear(GL_COLOR_BUFFER_BIT);
         
-//        glfwSwapBuffers(trackerWindow);
-//        glfwPollEvents();
+        glClearColor(1, 1, 1, 1);
+        
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
+        glOrtho(-aspectRatio, aspectRatio, -1.f, 1.f, 1.f, -1.f);
+        
+        glMatrixMode(GL_MODELVIEW);
+        glLoadIdentity();
+
+        //pitch lines
+        glBegin(GL_LINES);
+        for (int i = 0; i<36; ++i)
+        {
+            glColor3f(0.9f,0.7f,0.5f);
+            glVertex3f(aspectRatio*-1, 2*(i/36.f)-1, 0.f);
+            glVertex3f(aspectRatio, 2*(i/36.f)-1, 0.f);
+        }
+        glEnd();
+        
+        for (int i = 1; i < pitchTrackerListSize; ++i)
+        {
+            pitchTrackerList[i] = pitchTrackerList[i+1];
+        }
+        pitchTrackerList[pitchTrackerListSize-1] = (float)outputPitch/0x3FFF;
+        
+        glBegin(GL_LINES);
+        glColor3f(0.f, 0.f, 0.1f);
+        for (int i = 0; i < pitchTrackerListSize; ++i)
+        {
+            float xPos1 = aspectRatio*((2*i/(float)pitchTrackerListSize)-1);
+            float xPos2 = aspectRatio*((2*(i+1)/(float)pitchTrackerListSize)-1);
+            float yPos = 2*pitchTrackerList[i]-1;
+            glVertex3f(xPos1, yPos, 0.f);
+            glVertex3f(xPos2, yPos, 0.f);
+        }
+        glEnd();
+        
+        glBegin(GL_LINES);
+        for (int i = 0; i < pitchTrackerListSize; ++i)
+        {
+            if (i!=0)
+            {
+                if ((pitchTrackerList[i-1] < 0) & (pitchTrackerList[i]>=0))
+                {
+                    float xPos = aspectRatio*((2*i/(float)pitchTrackerListSize)-1);
+                    glColor3f(0.0f, 0.3f, 0.0f);
+                    glVertex3f(xPos, -1, 0.f);
+                    glVertex3f(xPos, 1, 0.f);
+                }
+            }
+            if (i!=pitchTrackerListSize)
+            {
+                if ((pitchTrackerList[i+1] < 0) & (pitchTrackerList[i]>=0))
+                {
+                    float xPos = aspectRatio*((2*i/(float)pitchTrackerListSize)-1);
+                    glColor3f(0.3f, 0.0f, 0.0f);
+                    glVertex3f(xPos, -1, 0.f);
+                    glVertex3f(xPos, 1, 0.f);
+                }
+            }
+    
+        }
+        glEnd();
+
+        
+        glfwSwapBuffers(trackerWindow);
+        glfwPollEvents();
         
 
         
@@ -513,7 +513,7 @@ int main (void)
         //        printf("first 8 bins: %06.2f %06.2f %06.2f %06.2f %06.2f %06.2f %06.2f %06.2f\n", fft_mag[0], fft_mag[1], fft_mag[2], fft_mag[3], fft_mag[4], fft_mag[5], fft_mag[6], fft_mag[7]);
 //        printf("onset amplitude: %f\n",onset_average_amplitude);
 //            printf("harmonic average vs. lp_pitch: %f %f\n", harmonic_average, dominant_frequency_lp);
-//        printf("midi channel, angle: %i\t %i\n",midi_channel, angle);
+        printf("midi channel, angle: %i\t %i\n",midi_channel, angle);
     }
     
     
