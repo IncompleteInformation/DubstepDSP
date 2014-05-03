@@ -7,12 +7,15 @@
 
 #include <fftw3.h>
 
+#include <stdbool.h>
+
 #define SAMPLE_RATE       44100.0
 #define FRAMES_PER_BUFFER 64
 #define FFT_SIZE          1024 // 1024 = 23ms delay, 43Hz bins
 #define BIN_SIZE          (SAMPLE_RATE/FFT_SIZE)
 #define ONSET_FFT_SIZE    64
-#define ONSET_THRESHOLD   0.025
+#define ONSET_THRESHOLD   0.00003125
+#define OFFSET_THRESHOLD  (ONSET_THRESHOLD/2)
 
 // FFT data
 extern double       fft_buffer[FFT_SIZE];
@@ -33,6 +36,8 @@ extern double       spectral_flatness;
 extern double       harmonic_average;
 
 // Onset detection
+extern int          window_function;
+extern bool         note_on;
 extern double       onset_fft_buffer[ONSET_FFT_SIZE];
 extern fftw_complex onset_fft[ONSET_FFT_SIZE];
 extern double       onset_fft_mag[ONSET_FFT_SIZE/2+1];
@@ -44,4 +49,5 @@ extern int          onset_triggered;
 void live_init ();
 
 // Advance system state by a single sample
-void live_push_sample (float sample);
+// Return true if FFT buffer just got filled.
+bool live_push_sample (float sample);

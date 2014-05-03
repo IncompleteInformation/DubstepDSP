@@ -13,12 +13,12 @@
 
 //volatile int STOP=FALSE;
 
-int fd,c, res;
+int fd;
 struct termios oldtio,newtio;
 char buf[255];
 
 
-int glove_init()
+int serial_init()
 {
     fd = open(MODEMDEVICE, O_RDWR | O_NOCTTY );
     if (fd <0) {perror(MODEMDEVICE); return 0; }
@@ -41,20 +41,12 @@ int glove_init()
     return 1;
 }
 
-int glove_poll (int* output)
+size_t serial_poll (char* out, size_t out_size)
 {
-    res = read(fd,buf,255);   /* returns after 5 chars have been input */
-    //printf(":");
-    for (int i = 0; i<res; ++i)
-    {
-        output[i] = buf[i];
-        //printf("%i:", buf[i]);
-    }
-    //printf("\n");
-    return res;
+    return read(fd,out,out_size);   /*TODO: figure this out: returns after 5 chars have been input */
 }
 
-void glove_close ()
+void serial_close ()
 {
     tcsetattr(fd,TCSANOW,&oldtio);
 }

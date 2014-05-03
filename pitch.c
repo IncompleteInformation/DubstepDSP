@@ -6,6 +6,7 @@
 
 #define E 2.71828182845904523536028747135266249775724709369995
 
+
 void calc_fft (double* sample, fftw_complex* fft, double* tmp, size_t sample_size)
 {
     for (size_t i = 0; i < sample_size; ++i) tmp[i] = sample[i];
@@ -17,7 +18,7 @@ void calc_fft (double* sample, fftw_complex* fft, double* tmp, size_t sample_siz
 void calc_fft_mag (fftw_complex* fft, double* fft_mag, size_t sample_size)
 {
     for (size_t i = 0; i < sample_size/2+1; ++i)
-        fft_mag[i] = fft[i][0]*fft[i][0] + fft[i][1]*fft[i][1];
+        fft_mag[i] = (fft[i][0]*fft[i][0] + fft[i][1]*fft[i][1])/((sample_size/2)*(sample_size/2));
 }
 
 double dominant_freq (fftw_complex* fft, double* fft_mag, size_t sample_size, double sample_rate)
@@ -39,45 +40,7 @@ double dominant_freq (fftw_complex* fft, double* fft_mag, size_t sample_size, do
     double delta = (right - left) / (2 * peak - left - right);
     return sample_rate / sample_size * (max_bin - delta);
 }
-//DEPRECATED
-//double dominant_freq_lp (fftw_complex* fft, double* fft_mag, size_t sample_size, double sample_rate, int frequency)
-//{
-//    double bin_size = sample_rate/sample_size;
-//    double max = 0;
-//    double max_2 = 0; //second highest
-//    long max_bin = 0;
-//    long max_2_bin = 0;
-//    for (size_t i = 0; (i+1)*bin_size < frequency; ++i)
-//    {
-//        //double scale_factor = (frequency-((i+1)*bin_size))/frequency;
-//        if (fft_mag[i]/**scale_factor*/ > max)
-//        {
-//            max_2 = max;
-//            max_2_bin = max_bin;
-//            max = fft_mag[i];
-//            max_bin = i + 1;
-//        }
-//    }
-//    
-//    double peak  = fft[max_bin][0];
-//    double left  = fft[max_bin-1][0];
-//    double right = fft[max_bin+1][0];
-//    double delta = (right - left) / (2 * peak - left - right);
-//    
-//    double peak2  = fft[max_bin][0];
-//    double left2  = fft[max_bin-1][0];
-//    double right2 = fft[max_bin+1][0];
-//    double delta2 = (right2 - left2) / (2 * peak2 - left2 - right2);
-//    
-//    if ((peak<3*peak2) && (peak>1.25*peak2)){
-//        double candidate = sample_rate / sample_size * (max_2_bin - delta2);
-//        if (candidate > 75) return candidate;
-//    }
-//    
-//    double candidate = sample_rate / sample_size * (max_bin - delta);
-//    if (candidate > 75) return candidate;
-//    else return -INFINITY;
-//}
+
 double dominant_freq_lp (fftw_complex* fft, double* fft_mag, size_t sample_size, double sample_rate, int frequency)
 {
     double bin_size = sample_rate/sample_size;
@@ -97,10 +60,10 @@ double dominant_freq_lp (fftw_complex* fft, double* fft_mag, size_t sample_size,
     {
         normalized[i] = fft_mag[i]/max;
     }
-    double ratio = .0625;
+    double threshold = .0625;
     for (size_t i = 1; i<num_bins; ++i)
     {
-        if ((normalized[i]>normalized[i-1]) && (normalized[i]>ratio))
+        if ((normalized[i]>normalized[i-1]) && (normalized[i]>threshold))
         {
             if (normalized[i+1]>normalized[i])
             {

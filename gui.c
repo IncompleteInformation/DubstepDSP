@@ -1,5 +1,6 @@
 #include "gui.h"
 #include "live.h"
+#include "windowing.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -9,6 +10,7 @@
 #include <GLFW/glfw3.h>
 
 #define PITCHTRACKERLISTSIZE 256
+#define SPECTROGRAM_LENGTH   100
 
 static GLFWwindow* trackerWindow;
 static GLFWwindow* mainWindow;
@@ -17,12 +19,20 @@ static double dbRange;
 static int    width, height;
 static float  aspectRatio;
 static float  pitchTrackerList[PITCHTRACKERLISTSIZE];
-static bool   note_on;
+
+int spectrogram_buffer_loc;
+double spectrogram_buffer[SPECTROGRAM_LENGTH][FFT_SIZE/2+1];
 
 static void on_key_press (GLFWwindow* window, int key, int scancode, int action, int mods)
 {
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
         glfwSetWindowShouldClose(window, GL_TRUE);
+    if (key == GLFW_KEY_0 && action == GLFW_PRESS) window_function = RECTANGLE;
+    if (key == GLFW_KEY_1 && action == GLFW_PRESS) window_function = WELCH;
+    if (key == GLFW_KEY_2 && action == GLFW_PRESS) window_function = HANNING;
+    if (key == GLFW_KEY_3 && action == GLFW_PRESS) window_function = HAMMING;
+    if (key == GLFW_KEY_4 && action == GLFW_PRESS) window_function = BLACKMAN;
+    if (key == GLFW_KEY_5 && action == GLFW_PRESS) window_function = NUTTAL;
 }
 
 static double x_log_normalize (double unscaled, double logMax)
@@ -39,6 +49,86 @@ static double db_normalize (double magnitude, double max_magnitude, double dbRan
 static void on_glfw_error (int error, const char* description)
 {
     fputs(description, stderr);
+}
+
+static void graph_log_lines (double aspectRatio)
+{
+    //log lines
+    glBegin(GL_LINES);
+    int j = 0;
+    int k = 10;
+    double logLogLinesX = log10(SAMPLE_RATE/2);
+    while(j<(SAMPLE_RATE/2))
+    {
+        glColor3f(0.6f,0.4f,0.1f);
+        double logJ = x_log_normalize((double)j, logLogLinesX);
+        glVertex3f(aspectRatio*(2*logJ-1), -1, 0.f);
+        glVertex3f(aspectRatio*(2*logJ-1), 1, 0.f);
+        j+=k;
+        if (j==k*10) k*=10;
+    }
+    glEnd();
+}
+
+static void graph_fft_mag (int dbRange, double aspectRatio)
+{
+    //fft_mag graph (db, log)
+    glBegin(GL_LINE_STRIP);
+    glColor3f(1.0f,0.0f,1.0f);
+    double logMax = log10(SAMPLE_RATE/2);
+    for (int i = 0; i < FFT_SIZE/2+1; ++i)
+    {
+        double logI = x_log_normalize(i*BIN_SIZE, logMax);
+        double scaledMag = db_normalize(fft_mag[i], 1, dbRange); //max amplitude is FFT_SIZE/2)^2
+        glVertex3f(2*aspectRatio*logI-aspectRatio, 2*scaledMag-1, 0.f);
+    }
+    glEnd();
+}
+
+static void graph_spectral_centroid (double aspectRatio)
+{
+    //specral centroid marker
+    glBegin(GL_LINES);
+    glColor3f(1.f, 0.f, 0.f);
+    double logCentroid = log10(spectral_centroid)*(SAMPLE_RATE/2)/log10(SAMPLE_RATE/2+1);
+    glVertex3f(2*aspectRatio*logCentroid/(SAMPLE_RATE/2)-aspectRatio, -1, 0.f);
+    glVertex3f(2*aspectRatio*logCentroid/(SAMPLE_RATE/2)-aspectRatio, 1, 0.f);
+    glEnd();
+}
+
+static void graph_dominant_pitch_lp (double aspectRatio)
+{
+    //dominant pitch line (lowpassed)
+    glBegin(GL_LINES);
+    glColor3f(0.f, 1.f, 1.f);
+    double domlogMax = log10(SAMPLE_RATE/2);
+    double logNormDomFreq_lp = x_log_normalize(dominant_frequency_lp, domlogMax);
+    glVertex3f(aspectRatio*(2*logNormDomFreq_lp-1), -1, 0.f);
+    glVertex3f(aspectRatio*(2*logNormDomFreq_lp-1), 1, 0.f);
+    glEnd();
+}
+
+static void graph_spectrogram (int dbRange, double aspectRatio){
+    double logMax = log10(SAMPLE_RATE/2);
+    for (int i = 0; i<SPECTROGRAM_LENGTH; ++i)
+    {
+        double curXLeft  = aspectRatio * (2 * (double)i/SPECTROGRAM_LENGTH - 1);
+        double curXRight = aspectRatio * (2 * (double)(i+1)/SPECTROGRAM_LENGTH -1);
+        glBegin(GL_QUAD_STRIP);
+        glVertex3f(curXLeft , -1, 0);
+        glVertex3f(curXRight, -1, 0);
+        for (int j = 1; j<FFT_SIZE/2+1; ++j)
+        {
+            //draw QUAD for each bin?
+            double logJ  = x_log_normalize(j*BIN_SIZE, logMax);
+            double curYTop = 2*logJ-1;
+            double scaledMag = spectrogram_buffer[(i+spectrogram_buffer_loc)%SPECTROGRAM_LENGTH][j];
+            glColor3f(scaledMag, scaledMag, scaledMag);
+            glVertex3f(curXLeft, curYTop, 0.f);
+            glVertex3f(curXRight, curYTop, 0.f);
+        }
+        glEnd();
+    }
 }
 
 void gui_init ()
@@ -69,6 +159,16 @@ bool gui_should_exit ()
     return glfwWindowShouldClose(mainWindow) || glfwWindowShouldClose(trackerWindow);
 }
 
+void gui_fft_filled ()
+{
+    for (int i = 0; i < FFT_SIZE/2+1; ++i)
+    {
+        if (note_on) spectrogram_buffer[spectrogram_buffer_loc][i] = db_normalize(fft_mag[i], 1, 96);
+        else spectrogram_buffer[spectrogram_buffer_loc][i] = 0;
+    }
+    spectrogram_buffer_loc = (spectrogram_buffer_loc+1)%SPECTROGRAM_LENGTH;
+}
+
 void gui_redraw ()
 {
     glfwMakeContextCurrent(mainWindow);
@@ -87,59 +187,11 @@ void gui_redraw ()
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     
-    //log lines
-    glBegin(GL_LINES);
-    int j = 0;
-    int k = 10;
-    double logLogLinesX = log10(SAMPLE_RATE/2);
-    while(j<(SAMPLE_RATE/2))
-    {
-        glColor3f(0.6f,0.4f,0.1f);
-        double logJ = x_log_normalize((double)j, logLogLinesX);
-        glVertex3f(aspectRatio*(2*logJ-1), -1, 0.f);
-        glVertex3f(aspectRatio*(2*logJ-1), 1, 0.f);
-        j+=k;
-        if (j==k*10) k*=10;
-    }
-    glEnd();
-    
-    //fft_mag graph (db, log)
-    glBegin(GL_LINE_STRIP);
-    glColor3f(1.0f,0.0f,1.0f);
-    double logMax = log10(SAMPLE_RATE/2);
-    for (int i = 0; i < FFT_SIZE/2+1; ++i)
-    {
-        double logI = x_log_normalize(i*BIN_SIZE, logMax);
-        double scaledMag = db_normalize(fft_mag[i], FFT_SIZE, dbRange);
-        glVertex3f(2*aspectRatio*logI-aspectRatio, 2*scaledMag-1, 0.f);
-    }
-    glEnd();
-    
-    //specral centroid marker
-    glBegin(GL_LINES);
-    glColor3f(1.f, 0.f, 0.f);
-    double logCentroid = log10(spectral_centroid)*(SAMPLE_RATE/2)/log10(SAMPLE_RATE/2+1);
-    glVertex3f(2*aspectRatio*logCentroid/(SAMPLE_RATE/2)-aspectRatio, -1, 0.f);
-    glVertex3f(2*aspectRatio*logCentroid/(SAMPLE_RATE/2)-aspectRatio, 1, 0.f);
-    glEnd();
-    
-//        //dominant pitch line
-//        glBegin(GL_LINES);
-//        glColor3f(0.f, 1.f, 0.f);
-//        logMax = log10(SAMPLE_RATE/2);
-//        double logNormDomFreq = x_log_normalize(dominant_frequency, logMax);
-//        glVertex3f(aspectRatio*(2*logNormDomFreq-1), -1, 0.f);
-//        glVertex3f(aspectRatio*(2*logNormDomFreq-1), 1, 0.f);
-//        glEnd();
-    
-    //dominant pitch line (lowpassed)
-    glBegin(GL_LINES);
-    glColor3f(0.f, 1.f, 1.f);
-    double domlogMax = log10(SAMPLE_RATE/2);
-    double logNormDomFreq_lp = x_log_normalize(dominant_frequency_lp, domlogMax);
-    glVertex3f(aspectRatio*(2*logNormDomFreq_lp-1), -1, 0.f);
-    glVertex3f(aspectRatio*(2*logNormDomFreq_lp-1), 1, 0.f);
-    glEnd();
+//    graph_log_lines(aspectRatio);
+//    graph_fft_mag(dbRange, aspectRatio);
+//    graph_spectral_centroid(aspectRatio);
+//    graph_dominant_pitch_lp(aspectRatio);
+    graph_spectrogram(dbRange, aspectRatio);
 
     glfwSwapBuffers(mainWindow);
     glfwPollEvents();

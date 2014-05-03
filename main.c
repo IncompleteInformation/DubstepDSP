@@ -2,7 +2,8 @@
 #include "live.h"
 #include "pitch.h"
 #include "midi.h"
-#include "glove.h"
+#include "serial.h"
+#include "windowing.h"
 
 // #define GLFW_INCLUDE_GLCOREARB
 #include <stdlib.h>
@@ -14,10 +15,22 @@
 #include <fftw3.h>
 #include <portmidi.h>
 
-static void glfwError (int error, const char* description)
-{
-    fputs(description, stderr);
-}
+double spectral_centroid;
+double prev_spectral_centroid = -INFINITY;
+double prev_output_pitch = -INFINITY;
+double dominant_frequency;
+double dominant_frequency_lp;
+double average_amplitude;
+double spectral_crest;
+double spectral_flatness;
+double harmonic_average;
+//onset detection
+double onset_fft_buffer[ONSET_FFT_SIZE];
+fftw_complex onset_fft[ONSET_FFT_SIZE];
+double onset_fft_mag[ONSET_FFT_SIZE/2+1];
+double onset_average_amplitude;
+int    onset_fft_buffer_loc;
+int    onset_triggered;
 
 static void pa_check_error (PaError error)
 {
@@ -28,12 +41,6 @@ static void pa_check_error (PaError error)
     fprintf( stderr, "Error number: %d\n", error );
     fprintf( stderr, "Error message: %s\n", Pa_GetErrorText( error ) );
     exit(EXIT_FAILURE);
-}
-
-static void on_key_press (GLFWwindow* window, int key, int scancode, int action, int mods)
-{
-    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, GL_TRUE);
 }
 
 static int on_audio_sync (const void* inputBuffer, void* outputBuffer,
@@ -47,24 +54,12 @@ static int on_audio_sync (const void* inputBuffer, void* outputBuffer,
 
     for (int i = 0; i < framesPerBuffer; ++i)
     {
-        if (in[i] > 1) { live_push_sample(1); printf("%s\n", "clipping high");continue;}
-        if (in[i] < -1) { live_push_sample(-1); printf("%s\n", "clipping low");continue;}
-        live_push_sample(in[i]);
-        // if (in[i] > 0.1) printf("%f\n", in[i]);
+        if (in[i] < -1 || in[i] > 1) printf("clipping\n");
+        double sample = in[i] > 1 ? 1 : in[i] < -1 ? -1 : in[i];
+        if (live_push_sample(sample)) gui_fft_filled();
     }
 
     return paContinue;
-}
-
-static double x_log_normalize (double unscaled, double logMax)
-{
-    return log10(unscaled)/logMax;
-}
-
-static double db_normalize (double magnitude, double max_magnitude, double dbRange)
-{
-    double absDb = 10*log10(magnitude/max_magnitude); //between -inf and 0
-    return (dbRange+absDb)/dbRange; //between 0 and 1
 }
 
 int main (void)
@@ -81,11 +76,11 @@ int main (void)
     
     // Initialize RS-232 connection to glove_
     int ser_live;
-    int ser_buf[32];
-    int ser_buf_loc;
+    int ser_buf_size = 256;
+    char ser_buf[ser_buf_size];
     int midi_channel = 0;
     int angle = 0; //the glove_ is held at an angle, since glove commands come in in pairs, we need to pick just one.
-    ser_live = glove_init();
+    ser_live = serial_init();
 
     // Initialize PortAudio
     pa_check_error(Pa_Initialize());
@@ -127,14 +122,14 @@ int main (void)
     gui_init();
     
     // Main loop
-    int note_on = 0;
+    note_on = 0;
     while (!gui_should_exit())
     {
         //SERIAL DATA HANDLING
         if (ser_live)
         {
-            ser_buf_loc = glove_poll(ser_buf);
-            for (int i=0; i<ser_buf_loc; ++i)
+            size_t bytes_read = serial_poll(ser_buf, ser_buf_size);
+            for (int i = 0; i < bytes_read; ++i)
             {
                 if (ser_buf[i]<0)
                 {
@@ -150,12 +145,13 @@ int main (void)
         }
 
         //MIDI OUT STATEMENTS
-        int outputPitch;
-        if (onset_average_amplitude > ONSET_THRESHOLD)
+        int outputPitch = -INFINITY;
+        if (onset_average_amplitude>ONSET_THRESHOLD)
         {
             if (!note_on)
             {
                 midi_write(Pm_Message(0x90|midi_channel, 54, 100/*(int)average_amplitude*/));
+                printf("midi on\n");
                 note_on = 1;
             }
             //0x2000 is 185 hz, 0x0000 is 73.416, 0x3fff is 466.16
@@ -164,22 +160,43 @@ int main (void)
             outputPitch = (int)((midiNumber-38)/32*0x3FFF);
             if (outputPitch > 0x3FFF) outputPitch = 0x3FFF;
             if (outputPitch < 0x0000) outputPitch = 0x0000;
-            int lsb_7 = outputPitch&0x7F;
-            int msb_7 = (outputPitch>>7)&0x7F;
-            int outputCentroid = (int)((spectral_centroid-400)/400*127);
+
+            int outputCentroid = (int)((spectral_centroid-500)/300*127);
             if (outputCentroid > 127) outputCentroid = 127;
             if (outputCentroid < 000) outputCentroid = 000;
+            if (prev_spectral_centroid != -INFINITY){
+                if (abs(outputCentroid-prev_spectral_centroid)>127){
+                    outputCentroid = prev_spectral_centroid;
+                }
+                else prev_spectral_centroid = outputCentroid;
+            }
+            else prev_spectral_centroid = outputCentroid;
+            
+            if (prev_output_pitch != -INFINITY){
+                if ((outputPitch == 0) || (outputPitch == 0x3FFF)){
+                    outputPitch = prev_output_pitch;
+                }
+                else prev_output_pitch = outputPitch;
+            }
+            else prev_output_pitch = outputPitch;
+            int lsb_7 = outputPitch&0x7F;
+            int msb_7 = (outputPitch>>7)&0x7F;
+
             
             if (ser_live) midi_write(Pm_Message(0xB0/*|midi_channel*/, 0, angle));
             midi_write(Pm_Message(0xB0/*|midi_channel*/, 1, outputCentroid));
+//            printf("centroid out: %03u pitch out: %04u\n", outputCentroid, outputPitch);
             midi_write(Pm_Message(0xE0|midi_channel, lsb_7, msb_7));
         }
-        else
+        else if (onset_average_amplitude<OFFSET_THRESHOLD)
         {
             if (note_on)
             {
                 midi_write(Pm_Message(0x80|midi_channel, 54, 100));
+                printf("midi off\n");
                 note_on = 0;
+                prev_spectral_centroid = -INFINITY;
+                prev_output_pitch = -INFINITY;
             }
             outputPitch = -INFINITY;
         }
@@ -194,7 +211,7 @@ int main (void)
         //        printf("low_passed_dom_freq : %f\n", dominant_frequency_lp);
         //        printf("first 8 bins: %06.2f %06.2f %06.2f %06.2f %06.2f %06.2f %06.2f %06.2f\n", fft_mag[0], fft_mag[1], fft_mag[2], fft_mag[3], fft_mag[4], fft_mag[5], fft_mag[6], fft_mag[7]);
         //        printf("onset amplitude: %f\n",onset_average_amplitude);
-    //            printf("harmonic average vs. lp_pitch: %f %f\n", harmonic_average, dominant_frequency_lp);
+        //        printf("harmonic average vs. lp_pitch: %f %f\n", harmonic_average, dominant_frequency_lp);
         printf("midi channel, angle: %i\t %i\n",midi_channel, angle);
     }
     
