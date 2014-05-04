@@ -1,5 +1,5 @@
+#include "backend.h"
 #include "gui.h"
-#include "live.h"
 #include "windowing.h"
 
 #include <stdlib.h>

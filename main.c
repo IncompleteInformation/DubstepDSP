@@ -1,5 +1,5 @@
+#include "backend.h"
 #include "gui.h"
-#include "live.h"
 #include "pitch.h"
 #include "midi.h"
 #include "serial.h"
@@ -14,23 +14,6 @@
 #include <portaudio.h>
 #include <fftw3.h>
 #include <portmidi.h>
-
-double spectral_centroid;
-double prev_spectral_centroid = -INFINITY;
-double prev_output_pitch = -INFINITY;
-double dominant_frequency;
-double dominant_frequency_lp;
-double average_amplitude;
-double spectral_crest;
-double spectral_flatness;
-double harmonic_average;
-//onset detection
-double onset_fft_buffer[ONSET_FFT_SIZE];
-fftw_complex onset_fft[ONSET_FFT_SIZE];
-double onset_fft_mag[ONSET_FFT_SIZE/2+1];
-double onset_average_amplitude;
-int    onset_fft_buffer_loc;
-int    onset_triggered;
 
 static void pa_check_error (PaError error)
 {
@@ -50,13 +33,12 @@ static int on_audio_sync (const void* inputBuffer, void* outputBuffer,
                         void* userData)
 {
     float* in = (float*)inputBuffer;
-    //float* out = (float*)outputBuffer;
 
     for (int i = 0; i < framesPerBuffer; ++i)
     {
         if (in[i] < -1 || in[i] > 1) printf("clipping\n");
         double sample = in[i] > 1 ? 1 : in[i] < -1 ? -1 : in[i];
-        if (live_push_sample(sample)) gui_fft_filled();
+        if (backend_push_sample(sample)) gui_fft_filled();
     }
 
     return paContinue;
@@ -69,7 +51,7 @@ int main (void)
     onset_triggered = 0;
 
     // Initialize Live
-    live_init();
+    backend_init();
     
     // Initialize Midi
     midi_init();

@@ -1,4 +1,4 @@
-#include "live.h"
+#include "backend.h"
 #include "pitch.h"
 #include "windowing.h"
 
@@ -37,14 +37,18 @@ double       onset_average_amplitude;
 int          onset_fft_buffer_loc;
 int          onset_triggered;
 
-void live_init ()
+// Hysterisis
+double       prev_spectral_centroid = -INFINITY;
+double       prev_output_pitch = -INFINITY;
+
+void backend_init ()
 {
     fft_buffer_loc = 0;
     onset_fft_buffer_loc = 0;
     onset_triggered = 0;
 }
 
-bool live_push_sample (float sample)
+bool backend_push_sample (float sample)
 {
     onset_fft_buffer[onset_fft_buffer_loc] = sample;
     ++onset_fft_buffer_loc;

@@ -45,11 +45,11 @@ make
 ## Components
 
 ### Lib
-- [Glove](glove.h) - Glove communication.
+- [Backend](backend.h) - Live analysis backend.
 - [GUI](gui.h) - Graphical user interface.
-- [Live](live.h) - Live analysis backend.
 - [Midi](midi.h) - MIDI output.
 - [Pitch](pitch.h) - Pitch detection algorithms.
+- [Serial](serial.h) - Serial device communication.
 
 ### Bin
 - [Main](main.c) - Live pitch detection, visualization and MIDI output.
@@ -57,4 +57,4 @@ make
 
 ## Todo
 
-- Move onset / offset detection into [live.c](live.c).
+- Move onset / offset detection into [backend.c](backend.c).
