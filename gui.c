@@ -51,7 +51,7 @@ static void on_glfw_error (int error, const char* description)
     fputs(description, stderr);
 }
 
-static void graph_log_lines (double aspectRatio)
+static void graph_log_lines ()
 {
     //log lines
     glBegin(GL_LINES);
@@ -70,7 +70,7 @@ static void graph_log_lines (double aspectRatio)
     glEnd();
 }
 
-static void graph_fft_mag (int dbRange, double aspectRatio)
+static void graph_fft_mag (int dbRange)
 {
     //fft_mag graph (db, log)
     glBegin(GL_LINE_STRIP);
@@ -85,7 +85,7 @@ static void graph_fft_mag (int dbRange, double aspectRatio)
     glEnd();
 }
 
-static void graph_spectral_centroid (double aspectRatio)
+static void graph_spectral_centroid ()
 {
     //specral centroid marker
     glBegin(GL_LINES);
@@ -96,7 +96,7 @@ static void graph_spectral_centroid (double aspectRatio)
     glEnd();
 }
 
-static void graph_dominant_pitch_lp (double aspectRatio)
+static void graph_dominant_pitch_lp ()
 {
     //dominant pitch line (lowpassed)
     glBegin(GL_LINES);
@@ -108,7 +108,8 @@ static void graph_dominant_pitch_lp (double aspectRatio)
     glEnd();
 }
 
-static void graph_spectrogram (int dbRange, double aspectRatio){
+static void graph_spectrogram (int dbRange)
+{
     double logMax = log10(SAMPLE_RATE/2);
     for (int i = 0; i<SPECTROGRAM_LENGTH; ++i)
     {
@@ -129,6 +130,99 @@ static void graph_spectrogram (int dbRange, double aspectRatio){
         }
         glEnd();
     }
+}
+
+static void graph_x_log_lines()
+{
+    glBegin(GL_LINES);
+    for (int i = 0; i<36; ++i)
+    {
+        glColor3f(0.9f,0.7f,0.5f);
+        glVertex3f(aspectRatio*-1, 2*(i/36.f)-1, 0.f);
+        glVertex3f(aspectRatio, 2*(i/36.f)-1, 0.f);
+    }
+    glEnd();
+}
+
+static void graph_midi_notes()
+{
+    for (int i = 1; i < PITCHTRACKERLISTSIZE; ++i)
+    {
+        pitchTrackerList[i] = pitchTrackerList[i+1];
+    }
+
+    double midiNumber = 12 * log2(dominant_frequency_lp/440) + 69;
+    int outputPitch = (int)((midiNumber-38)/32*0x3FFF);
+    if (onset_average_amplitude < ONSET_THRESHOLD) outputPitch = -INFINITY;
+    pitchTrackerList[PITCHTRACKERLISTSIZE-1] = (float)outputPitch/0x3FFF;
+    
+    glBegin(GL_LINES);
+    glColor3f(0.f, 0.f, 0.1f);
+
+    for (int i = 0; i < PITCHTRACKERLISTSIZE; ++i)
+    {
+        float xPos1 = aspectRatio*((2*i/(float)PITCHTRACKERLISTSIZE)-1);
+        float xPos2 = aspectRatio*((2*(i+1)/(float)PITCHTRACKERLISTSIZE)-1);
+        float yPos = 2*pitchTrackerList[i]-1;
+        glVertex3f(xPos1, yPos, 0.f);
+        glVertex3f(xPos2, yPos, 0.f);
+    }
+    glEnd();
+}
+
+static void graph_NON_NOFFs()
+{
+    glBegin(GL_LINES);
+    for (int i = 0; i < PITCHTRACKERLISTSIZE; ++i)
+    {
+        if (i!=0)
+        {
+            if ((pitchTrackerList[i-1] < 0) & (pitchTrackerList[i]>=0))
+            {
+                float xPos = aspectRatio*((2*i/(float)PITCHTRACKERLISTSIZE)-1);
+                glColor3f(0.0f, 0.3f, 0.0f);
+                glVertex3f(xPos, -1, 0.f);
+                glVertex3f(xPos, 1, 0.f);
+            }
+        }
+        if (i!=PITCHTRACKERLISTSIZE)
+        {
+            if ((pitchTrackerList[i+1] < 0) & (pitchTrackerList[i]>=0))
+            {
+                float xPos = aspectRatio*((2*i/(float)PITCHTRACKERLISTSIZE)-1);
+                glColor3f(0.3f, 0.0f, 0.0f);
+                glVertex3f(xPos, -1, 0.f);
+                glVertex3f(xPos, 1, 0.f);
+            }
+        }
+
+    }
+    glEnd();
+}
+
+static void switch_focus(GLFWwindow* focus)
+{
+    glfwPollEvents();
+
+    glfwMakeContextCurrent(focus);
+    glfwSetKeyCallback(focus, on_key_press);
+    
+    glfwGetFramebufferSize(focus, &width, &height);
+    aspectRatio = width / (float) height;
+    
+    glViewport(0, 0, width, height);
+    glClear(GL_COLOR_BUFFER_BIT);
+    
+    glClearColor(1, 1, 1, 1);
+    
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glOrtho(-aspectRatio, aspectRatio, -1.f, 1.f, 1.f, -1.f);
+    
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+
+
 }
 
 void gui_init ()
@@ -171,109 +265,22 @@ void gui_fft_filled ()
 
 void gui_redraw ()
 {
-    glfwMakeContextCurrent(mainWindow);
-    glfwSetKeyCallback(mainWindow, on_key_press);
-
-    glfwGetFramebufferSize(mainWindow, &width, &height);
-    aspectRatio = width / (float) height;
-
-    glViewport(0, 0, width, height);
-    glClear(GL_COLOR_BUFFER_BIT);
-
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glOrtho(-aspectRatio, aspectRatio, -1.f, 1.f, 1.f, -1.f);
-
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
+    switch_focus(mainWindow);
     
-//    graph_log_lines(aspectRatio);
-//    graph_fft_mag(dbRange, aspectRatio);
-//    graph_spectral_centroid(aspectRatio);
-//    graph_dominant_pitch_lp(aspectRatio);
-    graph_spectrogram(dbRange, aspectRatio);
+//    graph_log_lines();
+//    graph_fft_mag(dbRange);
+//    graph_spectral_centroid();
+//    graph_dominant_pitch_lp();
+    graph_spectrogram(dbRange);
 
     glfwSwapBuffers(mainWindow);
-    glfwPollEvents();
-    
+
     //PITCH TRACKING WINDOW
-    glfwMakeContextCurrent(trackerWindow);
-    glfwSetKeyCallback(trackerWindow, on_key_press);
+    switch_focus(trackerWindow);
     
-    glfwGetFramebufferSize(trackerWindow, &width, &height);
-    aspectRatio = width / (float) height;
-    
-    glViewport(0, 0, width, height);
-    glClear(GL_COLOR_BUFFER_BIT);
-    
-    glClearColor(1, 1, 1, 1);
-    
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glOrtho(-aspectRatio, aspectRatio, -1.f, 1.f, 1.f, -1.f);
-    
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-    
-    //log lines
-    glBegin(GL_LINES);
-    for (int i = 0; i<36; ++i)
-    {
-        glColor3f(0.9f,0.7f,0.5f);
-        glVertex3f(aspectRatio*-1, 2*(i/36.f)-1, 0.f);
-        glVertex3f(aspectRatio, 2*(i/36.f)-1, 0.f);
-    }
-    glEnd();
-
-    for (int i = 1; i < PITCHTRACKERLISTSIZE; ++i)
-    {
-        pitchTrackerList[i] = pitchTrackerList[i+1];
-    }
-
-    double midiNumber = 12 * log2(dominant_frequency_lp/440) + 69;
-    int outputPitch = (int)((midiNumber-38)/32*0x3FFF);
-    if (onset_average_amplitude < ONSET_THRESHOLD) outputPitch = -INFINITY;
-    pitchTrackerList[PITCHTRACKERLISTSIZE-1] = (float)outputPitch/0x3FFF;
-    
-    glBegin(GL_LINES);
-    glColor3f(0.f, 0.f, 0.1f);
-    for (int i = 0; i < PITCHTRACKERLISTSIZE; ++i)
-    {
-        float xPos1 = aspectRatio*((2*i/(float)PITCHTRACKERLISTSIZE)-1);
-        float xPos2 = aspectRatio*((2*(i+1)/(float)PITCHTRACKERLISTSIZE)-1);
-        float yPos = 2*pitchTrackerList[i]-1;
-        glVertex3f(xPos1, yPos, 0.f);
-        glVertex3f(xPos2, yPos, 0.f);
-    }
-    glEnd();
-    
-    glBegin(GL_LINES);
-    for (int i = 0; i < PITCHTRACKERLISTSIZE; ++i)
-    {
-        if (i!=0)
-        {
-            if ((pitchTrackerList[i-1] < 0) & (pitchTrackerList[i]>=0))
-            {
-                float xPos = aspectRatio*((2*i/(float)PITCHTRACKERLISTSIZE)-1);
-                glColor3f(0.0f, 0.3f, 0.0f);
-                glVertex3f(xPos, -1, 0.f);
-                glVertex3f(xPos, 1, 0.f);
-            }
-        }
-        if (i!=PITCHTRACKERLISTSIZE)
-        {
-            if ((pitchTrackerList[i+1] < 0) & (pitchTrackerList[i]>=0))
-            {
-                float xPos = aspectRatio*((2*i/(float)PITCHTRACKERLISTSIZE)-1);
-                glColor3f(0.3f, 0.0f, 0.0f);
-                glVertex3f(xPos, -1, 0.f);
-                glVertex3f(xPos, 1, 0.f);
-            }
-        }
-
-    }
-    glEnd();
+    graph_x_log_lines();
+    graph_midi_notes();
+    graph_NON_NOFFs();
     
     glfwSwapBuffers(trackerWindow);
-    glfwPollEvents();
 }
