@@ -2,8 +2,8 @@ FLAGS=-O3
 
 default: bleep_test
 
-bench: backend.c bench.c pitch.c windowing.c
-	@cc ${FLAGS} backend.c bench.c pitch.c windowing.c -o bench \
+bench: backend.c bench.c dywapitchtrack.c pitch.c windowing.c
+	@cc ${FLAGS} backend.c bench.c dywapitchtrack.c pitch.c windowing.c -o bench \
 		-lfftw3 \
 		-lsndfile
 

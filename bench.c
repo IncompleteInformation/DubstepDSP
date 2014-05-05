@@ -1,4 +1,5 @@
 #include "backend.h"
+#include "dywapitchtrack.h"
 #include "tinydir.h"
 
 #include <sndfile.h>
@@ -9,6 +10,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+
+static dywapitchtracker pitch_tracker;
 
 bool ends_with (char* str, char* suffix)
 {
@@ -45,13 +48,16 @@ void test_file (char* file)
     double* sample = malloc(sizeof(double) * info.frames);
     sf_read_double(f, sample, info.frames);
     
-    for (int i = 0; i < info.frames; ++i)
+    for (int i = 0; i+1024 <= info.frames; i += 1024)
     {
-        if (backend_push_sample(sample[i]))
-        {
-            double t = 1.0 * i / info.samplerate;
-            printf("%s, %f, %f, %f\n", file, t, freq, dominant_frequency_lp);
-        }
+        double t = 1.0 * i / info.samplerate;
+        double pitch = dywapitch_computepitch(&pitch_tracker, sample, i, 1024);
+        printf("%s, %f, %f, %f\n", file, t, freq, pitch);
+        // if (backend_push_sample(sample[i]))
+        // {
+        //     double t = 1.0 * i / info.samplerate;
+        //     printf("%s, %f, %f, %f\n", file, t, freq, dominant_frequency_lp);
+        // }
     }
 
     sf_close(f);
@@ -85,9 +91,10 @@ void test_dir (char* path)
 
 int main (int argc, char** argv)
 {
-    backend_init();
+    // backend_init();
+    dywapitch_inittracking(&pitch_tracker);
 
-    printf("File, Time, Freq, dominant_frequency_lp\n");
+    printf("File, Time, Pitch, PitchGuess\n");
 
     char path[1024];
     getcwd(path, 1024);
