@@ -133,7 +133,7 @@ int main (void)
             if (!note_on)
             {
                 midi_write(Pm_Message(0x90|midi_channel, 54, 100/*(int)average_amplitude*/));
-                printf("midi on\n");
+                // printf("midi on\n");
                 note_on = 1;
             }
             //0x2000 is 185 hz, 0x0000 is 73.416, 0x3fff is 466.16
@@ -175,7 +175,7 @@ int main (void)
             if (note_on)
             {
                 midi_write(Pm_Message(0x80|midi_channel, 54, 100));
-                printf("midi off\n");
+                // printf("midi off\n");
                 note_on = 0;
                 prev_spectral_centroid = -INFINITY;
                 prev_output_pitch = -INFINITY;
@@ -194,7 +194,7 @@ int main (void)
         //        printf("first 8 bins: %06.2f %06.2f %06.2f %06.2f %06.2f %06.2f %06.2f %06.2f\n", fft_mag[0], fft_mag[1], fft_mag[2], fft_mag[3], fft_mag[4], fft_mag[5], fft_mag[6], fft_mag[7]);
         //        printf("onset amplitude: %f\n",onset_average_amplitude);
         //        printf("harmonic average vs. lp_pitch: %f %f\n", harmonic_average, dominant_frequency_lp);
-        printf("midi channel, angle: %i\t %i\n",midi_channel, angle);
+        // printf("midi channel, angle: %i\t %i\n",midi_channel, angle);
     }
     
     // Shut down the GUI

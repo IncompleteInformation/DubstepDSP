@@ -7,8 +7,8 @@ bench: backend.c bench.c dywapitchtrack.c pitch.c windowing.c
 		-lfftw3 \
 		-lsndfile
 
-bleep: gui.c backend.c main.c midi.c pitch.c serial.c windowing.c
-	@cc ${FLAGS} gui.c backend.c main.c midi.c pitch.c serial.c windowing.c -o bleep \
+bleep: backend.c dywapitchtrack.c gui.c main.c midi.c pitch.c serial.c windowing.c
+	@cc ${FLAGS} backend.c dywapitchtrack.c gui.c main.c midi.c pitch.c serial.c windowing.c -o bleep \
 		-lfftw3 \
 		-lglfw3 \
 		-lportaudio \

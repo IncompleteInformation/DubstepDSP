@@ -1,4 +1,5 @@
 #include "backend.h"
+#include "dywapitchtrack.h"
 #include "pitch.h"
 #include "windowing.h"
 
@@ -41,11 +42,15 @@ int          onset_triggered;
 double       prev_spectral_centroid = -INFINITY;
 double       prev_output_pitch = -INFINITY;
 
+// Dynamic wavelet pitch tracker
+static dywapitchtracker pitch_tracker;
+
 void backend_init ()
 {
     fft_buffer_loc = 0;
     onset_fft_buffer_loc = 0;
     onset_triggered = 0;
+    dywapitch_inittracking(&pitch_tracker);
 }
 
 bool backend_push_sample (float sample)
@@ -90,7 +95,9 @@ bool backend_push_sample (float sample)
         //calc_fft_mag(fft_fft, fft_fft_mag, FFT_SIZE/2 + 1);
         dominant_frequency = 0; //dominant_freq(fft, fft_mag, FFT_SIZE, SAMPLE_RATE);
         spectral_centroid = calc_spectral_centroid(fft_mag,FFT_SIZE, SAMPLE_RATE);
-        dominant_frequency_lp = dominant_freq_lp(fft, fft_mag, FFT_SIZE, SAMPLE_RATE, 500);
+        // dominant_frequency_lp = dominant_freq_lp(fft, fft_mag, FFT_SIZE, SAMPLE_RATE, 500);
+        dominant_frequency_lp = dywapitch_computepitch(&pitch_tracker, fft_buffer, 0, FFT_SIZE);
+        printf("%f\n", dominant_frequency_lp);
         average_amplitude = calc_avg_amplitude(fft_mag, FFT_SIZE, SAMPLE_RATE, 0, FFT_SIZE/2);
         spectral_crest = 0; //calc_spectral_crest(fft_mag, FFT_SIZE, SAMPLE_RATE);
         spectral_flatness = 0; //calc_spectral_flatness(fft_mag, FFT_SIZE, SAMPLE_RATE, 0, SAMPLE_RATE/2);
