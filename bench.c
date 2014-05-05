@@ -42,7 +42,7 @@ void test_file (char* file)
         return;
     }
     double freq = atof(after(file, '/'));
-    double* sample = malloc(sizeof(double)*info.frames);
+    double* sample = malloc(sizeof(double) * info.frames);
     sf_read_double(f, sample, info.frames);
     
     for (int i = 0; i < info.frames; ++i)
