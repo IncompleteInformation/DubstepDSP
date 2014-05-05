@@ -29,17 +29,16 @@ bool test_file (char* file)
         fprintf(stderr, "FAILED: %s\n    File not found.\n", file);
         return false;
     }
-    double freq = atoi(after(file, '/'));
+    double freq = atof(after(file, '/'));
     double* sample = malloc(sizeof(double)*info.frames);
     sf_read_double(f, sample, info.frames);
     
-    printf("Time, Freq, dominant_frequency_lp\n");
     for (int i = 0; i < info.frames; ++i)
     {
         if (backend_push_sample(sample[i]))
         {
             double t = 1.0 * i / info.samplerate;
-            printf("%f, %f, %f\n", t, freq, dominant_frequency_lp);
+            printf("%s, %f, %f, %f\n", file, t, freq, dominant_frequency_lp);
         }
     }
 
@@ -51,6 +50,7 @@ int main (int argc, char** argv)
 {
     backend_init();
 
+    printf("File, Time, Freq, dominant_frequency_lp\n");
     for (int i = 1; i < argc; ++i)
     {
         test_file(argv[i]);
