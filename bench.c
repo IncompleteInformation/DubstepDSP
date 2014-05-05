@@ -1,4 +1,5 @@
 #include "backend.h"
+#include "tinydir.h"
 
 #include <sndfile.h>
 
@@ -8,6 +9,15 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+
+bool ends_with (char* str, char* suffix)
+{
+    if (!str || !suffix) return false;
+    size_t strl = strlen(str);
+    size_t sufl = strlen(suffix);
+    if (sufl > strl) return false;
+    return strncmp(str + strl - sufl, suffix, sufl) == 0;
+}
 
 char* after (char* str, char c)
 {
@@ -20,14 +30,16 @@ char* after (char* str, char c)
     return str;
 }
 
-bool test_file (char* file)
+void test_file (char* file)
 {
+    if (!ends_with(file, ".wav")) return;
+
     SF_INFO info;
     SNDFILE* f = sf_open(file, SFM_READ, &info);
     if (f == NULL)
     {
-        fprintf(stderr, "FAILED: %s\n    File not found.\n", file);
-        return false;
+        fprintf(stderr, "Failed to open file: %s\n", file);
+        return;
     }
     double freq = atof(after(file, '/'));
     double* sample = malloc(sizeof(double)*info.frames);
@@ -43,7 +55,32 @@ bool test_file (char* file)
     }
 
     sf_close(f);
-    return true;
+}
+
+void test_dir (char* path)
+{
+    tinydir_dir dir;
+    tinydir_open(&dir, path);
+
+    while (dir.has_next)
+    {
+        tinydir_file file;
+        tinydir_readfile(&dir, &file);
+        if (file.name[0] != '.')
+        {
+            char file_path[1024];
+            strcpy(file_path, path);
+            strcat(file_path, "/");
+            strcat(file_path, file.name);
+
+            if (file.is_dir) test_dir(file_path);
+            else             test_file(file_path);
+        }
+
+        tinydir_next(&dir);
+    }
+
+    tinydir_close(&dir);
 }
 
 int main (int argc, char** argv)
@@ -51,10 +88,9 @@ int main (int argc, char** argv)
     backend_init();
 
     printf("File, Time, Freq, dominant_frequency_lp\n");
-    for (int i = 1; i < argc; ++i)
-    {
-        test_file(argv[i]);
-    }
 
-    return 0;
+    char path[1024];
+    getcwd(path, 1024);
+    strcat(path, "/samples");
+    test_dir(path);
 }
