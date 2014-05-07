@@ -42,8 +42,8 @@ int          onset_triggered;
 double       prev_spectral_centroid = -INFINITY;
 double       prev_output_pitch = -INFINITY;
 
-// Dynamic wavelet pitch tracker
-static dywapitchtracker pitch_tracker;
+// // Dynamic wavelet pitch tracker
+// dywapitchtracker pitch_tracker;
 
 void backend_init ()
 {

@@ -132,6 +132,23 @@ static void graph_spectrogram (int dbRange)
     }
 }
 
+static void graph_spectrogram_3d (int dbRange)
+{
+    double logMax = log10(SAMPLE_RATE/2);
+    for (int i = 0; i<SPECTROGRAM_LENGTH; ++i)
+    {
+        glBegin(GL_LINE_STRIP);
+        glColor3f(1.0f,0.0f,1.0f);
+        for (int i = 0; i < FFT_SIZE/2+1; ++i)
+        {
+            double logI = x_log_normalize(i*BIN_SIZE, logMax);
+            double scaledMag = db_normalize(fft_mag[i], 1, dbRange); //max amplitude is FFT_SIZE/2)^2
+            glVertex3f(2*aspectRatio*logI-aspectRatio, 2*scaledMag-1, (double)i / SPECTROGRAM_LENGTH);
+        }
+        glEnd();
+    }
+}
+
 static void graph_x_log_lines()
 {
     glBegin(GL_LINES);
@@ -211,18 +228,15 @@ static void switch_focus(GLFWwindow* focus)
     aspectRatio = width / (float) height;
     
     glViewport(0, 0, width, height);
-    glClear(GL_COLOR_BUFFER_BIT);
-    
+    glClear(GL_COLOR_BUFFER_BIT);   
     glClearColor(1, 1, 1, 1);
-    
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glOrtho(-aspectRatio, aspectRatio, -1.f, 1.f, 1.f, -1.f);
-    
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
 
+    // glMatrixMode(GL_PROJECTION);
+    // glLoadIdentity();
+    // glOrtho(-aspectRatio, aspectRatio, -1.f, 1.f, 1.f, -1.f);
 
+    // glMatrixMode(GL_MODELVIEW);
+    // glLoadIdentity();
 }
 
 void gui_init ()
@@ -271,7 +285,7 @@ void gui_redraw ()
 //    graph_fft_mag(dbRange);
 //    graph_spectral_centroid();
 //    graph_dominant_pitch_lp();
-    graph_spectrogram(dbRange);
+    graph_spectrogram_3d(dbRange);
 
     glfwSwapBuffers(mainWindow);
 

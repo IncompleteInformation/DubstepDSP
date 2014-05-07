@@ -1,4 +1,5 @@
 #include "backend.h"
+#include "dywapitchtrack.h"
 #include "gui.h"
 #include "pitch.h"
 #include "midi.h"
@@ -177,6 +178,7 @@ int main (void)
                 midi_write(Pm_Message(0x80|midi_channel, 54, 100));
                 // printf("midi off\n");
                 note_on = 0;
+                dywapitch_inittracking(&pitch_tracker);
                 prev_spectral_centroid = -INFINITY;
                 prev_output_pitch = -INFINITY;
             }

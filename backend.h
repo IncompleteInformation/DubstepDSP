@@ -4,6 +4,7 @@
 // WAV file or real microphone input) should call this function repeatedly from
 // a single thread. Output is written to globals which can be accessed (with no
 // guarantees of quality of consistency) from any thread.
+#include "dywapitchtrack.h"
 
 #include <fftw3.h>
 
@@ -49,6 +50,9 @@ extern int          onset_triggered;
 // Hysterisis
 extern double       prev_spectral_centroid;
 extern double       prev_output_pitch;
+
+// Dynamic wavelet pitch tracker
+dywapitchtracker pitch_tracker;
 
 // Initialize backend system
 void backend_init ();

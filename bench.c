@@ -11,6 +11,19 @@
 #include <string.h>
 #include <unistd.h>
 
+#include <GLFW/glfw3.h>
+
+#define HISTOGRAM_BINS 5
+#define HISTOGRAM_RESOLUTION 1.0
+#define NUM_FILES (33*4)
+
+static GLFWwindow* pitchAccuracyWindow;
+static double all_histograms[NUM_FILES][HISTOGRAM_BINS*2+1];
+static int counter = 0;
+
+static int    width, height, numFiles;
+static float  aspectRatio;
+
 static dywapitchtracker pitch_tracker;
 
 bool ends_with (char* str, char* suffix)
@@ -33,6 +46,122 @@ char* after (char* str, char c)
     return str;
 }
 
+static void on_key_press (GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, GL_TRUE);
+}
+
+static void on_glfw_error (int error, const char* description)
+{
+    fputs(description, stderr);
+}
+
+static void switch_focus(GLFWwindow* focus)
+{
+    glfwPollEvents();
+
+    glfwMakeContextCurrent(focus);
+    glfwSetKeyCallback(focus, on_key_press);
+    
+    glfwGetFramebufferSize(focus, &width, &height);
+    aspectRatio = width / (float) height;
+    
+    glViewport(0, 0, width, height);
+    glClear(GL_COLOR_BUFFER_BIT);
+    
+    glClearColor(1, 1, 1, 1);
+    
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glOrtho(-aspectRatio, aspectRatio, -1.f, 1.f, 1.f, -1.f);
+    
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+}
+
+static void gui_init ()
+{
+    glfwSetErrorCallback(on_glfw_error);
+    if (!glfwInit()) exit(EXIT_FAILURE);
+    pitchAccuracyWindow = glfwCreateWindow(640, 480, "Pitch Accuracy Analysis", NULL, NULL);
+    if (!pitchAccuracyWindow)
+    {
+        glfwTerminate();
+        exit(EXIT_FAILURE);
+    }
+}
+
+static void gui_cleanup ()
+{
+    glfwDestroyWindow(pitchAccuracyWindow);
+    glfwTerminate();
+}
+
+static bool gui_should_exit ()
+{
+    return glfwWindowShouldClose(pitchAccuracyWindow);
+}
+
+static double* histogram(size_t len_data, double* data, double targetFreq, size_t num_bins)
+{
+    double* out = malloc(sizeof(double) * (num_bins*2+1));
+    double tolerance =  1.0;
+    double offset;
+    int histbin   = -1;
+    for (int i = 0; i < num_bins*2+1; i++) out[i] = 0;
+    for (int i = 0; i < len_data; i++)
+    {
+        offset = data[i] - targetFreq;
+        if      (offset == 0) histbin = num_bins;
+        else if (offset <  0) 
+        {
+            offset *= -1;
+            histbin = num_bins - (log2(offset) * tolerance);
+            if (histbin < 0       ) histbin = 0;
+            if (histbin > num_bins-1) histbin = num_bins - 1;
+        }
+        else
+        {
+            histbin = num_bins + (log2(offset) * tolerance);
+            if (histbin < num_bins    ) histbin =     num_bins;
+            if (histbin > 2 * num_bins) histbin = 2 * num_bins;           
+        }
+        out[(int)histbin] += 1.0 / len_data;
+    }
+    return out;
+}
+
+static void graph_histograms()
+{
+    for (int i = 0; i<NUM_FILES; ++i)
+    {
+        double curYBot = 2 * (double) i   /NUM_FILES - 1;
+        double curYTop = 2 * (double)(i+1)/NUM_FILES - 1;
+        glBegin(GL_QUAD_STRIP);
+        glVertex3f(-aspectRatio, curYBot, 0);
+        glVertex3f(-aspectRatio, curYTop, 0);
+        for (int j = 0; j<HISTOGRAM_BINS*2+2; ++j)
+        {
+            double curXRight = aspectRatio * (2 * ((double)j / (HISTOGRAM_BINS*2+1)) - 1);
+            
+            double scaledMag = all_histograms[i][j];
+            // printf("%f\n", scaledMag);
+            glColor3f(scaledMag, scaledMag, scaledMag);
+            glVertex3f(curXRight, curYTop, 0);
+            glVertex3f(curXRight, curYBot, 0);
+        }
+        glEnd();
+    }
+}
+
+static void gui_redraw ()
+{
+    switch_focus(pitchAccuracyWindow);
+    graph_histograms();
+    glfwSwapBuffers(pitchAccuracyWindow);
+}
+
 void test_file (char* file)
 {
     if (!ends_with(file, ".wav")) return;
@@ -46,20 +175,27 @@ void test_file (char* file)
     }
     double freq = atof(after(file, '/'));
     double* sample = malloc(sizeof(double) * info.frames);
+    double* values = malloc(sizeof(double) * info.frames/1024);
+
     sf_read_double(f, sample, info.frames);
     
     for (int i = 0; i+1024 <= info.frames; i += 1024)
     {
         double t = 1.0 * i / info.samplerate;
         double pitch = dywapitch_computepitch(&pitch_tracker, sample, i, 1024);
-        printf("%s, %f, %f, %f\n", file, t, freq, pitch);
+        values[i/1024] = pitch;
+
+        // printf("%s, %f, %f, %f\n", file, t, freq, pitch);
         // if (backend_push_sample(sample[i]))
         // {
         //     double t = 1.0 * i / info.samplerate;
         //     printf("%s, %f, %f, %f\n", file, t, freq, dominant_frequency_lp);
         // }
-    }
-
+    } 
+    double* out = malloc(sizeof(double) * (HISTOGRAM_BINS*2+1));
+    out = histogram(info.frames/1024, values, freq, HISTOGRAM_BINS);
+    for (int i = 0; i < (HISTOGRAM_BINS*2+1); i++) all_histograms[counter][i] = out[i];
+    counter++;
     sf_close(f);
 }
 
@@ -92,6 +228,7 @@ void test_dir (char* path)
 int main (int argc, char** argv)
 {
     // backend_init();
+    gui_init();
     dywapitch_inittracking(&pitch_tracker);
 
     printf("File, Time, Pitch, PitchGuess\n");
@@ -100,4 +237,9 @@ int main (int argc, char** argv)
     getcwd(path, 1024);
     strcat(path, "/samples");
     test_dir(path);
+    while (!gui_should_exit())
+    {
+        gui_redraw();
+    }
+    gui_cleanup();
 }

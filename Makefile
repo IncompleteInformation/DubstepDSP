@@ -5,7 +5,12 @@ default: bleep_test
 bench: backend.c bench.c dywapitchtrack.c pitch.c windowing.c
 	@cc ${FLAGS} backend.c bench.c dywapitchtrack.c pitch.c windowing.c -o bench \
 		-lfftw3 \
-		-lsndfile
+		-lsndfile \
+		-lglfw3 \
+		-framework Cocoa \
+		-framework IOKit \
+		-framework OpenGL \
+		-framework CoreVideo
 
 bleep: backend.c dywapitchtrack.c gui.c main.c midi.c pitch.c serial.c windowing.c
 	@cc ${FLAGS} backend.c dywapitchtrack.c gui.c main.c midi.c pitch.c serial.c windowing.c -o bleep \
