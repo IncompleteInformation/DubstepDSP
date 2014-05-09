@@ -13,7 +13,7 @@
 
 #include <GLFW/glfw3.h>
 
-#define HISTOGRAM_BINS 5
+#define HISTOGRAM_BINS 10
 #define HISTOGRAM_RESOLUTION 1.0
 #define NUM_FILES (33*4)
 
@@ -23,8 +23,6 @@ static int counter = 0;
 
 static int    width, height, numFiles;
 static float  aspectRatio;
-
-static dywapitchtracker pitch_tracker;
 
 bool ends_with (char* str, char* suffix)
 {
@@ -182,18 +180,17 @@ void test_file (char* file)
     for (int i = 0; i+1024 <= info.frames; i += 1024)
     {
         double t = 1.0 * i / info.samplerate;
-        double pitch = dywapitch_computepitch(&pitch_tracker, sample, i, 1024);
-        values[i/1024] = pitch;
 
-        // printf("%s, %f, %f, %f\n", file, t, freq, pitch);
-        // if (backend_push_sample(sample[i]))
-        // {
-        //     double t = 1.0 * i / info.samplerate;
-        //     printf("%s, %f, %f, %f\n", file, t, freq, dominant_frequency_lp);
-        // }
+        for (int j = 0; j < 1024; ++j)
+        {
+            backend_push_sample(sample[i+j]);
+        }
+        double pitch = spectral_centroid;
+        values[i/1024] = pitch;
+        printf("%f\t%f\n", freq, pitch);
     } 
     double* out = malloc(sizeof(double) * (HISTOGRAM_BINS*2+1));
-    out = histogram(info.frames/1024, values, freq, HISTOGRAM_BINS);
+    out = histogram(info.frames/1024, values, 0, HISTOGRAM_BINS);
     for (int i = 0; i < (HISTOGRAM_BINS*2+1); i++) all_histograms[counter][i] = out[i];
     counter++;
     sf_close(f);
@@ -227,15 +224,14 @@ void test_dir (char* path)
 
 int main (int argc, char** argv)
 {
-    // backend_init();
+    backend_init();
     gui_init();
-    dywapitch_inittracking(&pitch_tracker);
 
-    printf("File, Time, Pitch, PitchGuess\n");
+    // printf("File, Time, Pitch, PitchGuess\n");
 
     char path[1024];
     getcwd(path, 1024);
-    strcat(path, "/samples");
+    strcat(path, "/samples/3_aaa");
     test_dir(path);
     while (!gui_should_exit())
     {
