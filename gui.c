@@ -132,20 +132,77 @@ static void graph_spectrogram (int dbRange)
     }
 }
 
-static void graph_spectrogram_3d (int dbRange)
+static void graph_spectrogram_3d_parallel (int dbRange)
 {
+    glClear(GL_COLOR_BUFFER_BIT);
+    glLoadIdentity();
+    glTranslatef(-2.0,0.0,-8.0);
+    glRotatef(45.0,1.0,0.0,0.0);
+    glScalef(4.0,2.0,1.0);
     double logMax = log10(SAMPLE_RATE/2);
     for (int i = 0; i<SPECTROGRAM_LENGTH; ++i)
     {
         glBegin(GL_LINE_STRIP);
-        glColor3f(1.0f,0.0f,1.0f);
-        for (int i = 0; i < FFT_SIZE/2+1; ++i)
+        glColor3f(1-(.5+.5*((double)i / SPECTROGRAM_LENGTH)),1-((double)i / SPECTROGRAM_LENGTH),1-((double)i / SPECTROGRAM_LENGTH));
+        for (int j = 0; j < FFT_SIZE/2+1; ++j)
         {
-            double logI = x_log_normalize(i*BIN_SIZE, logMax);
-            double scaledMag = db_normalize(fft_mag[i], 1, dbRange); //max amplitude is FFT_SIZE/2)^2
-            glVertex3f(2*aspectRatio*logI-aspectRatio, 2*scaledMag-1, (double)i / SPECTROGRAM_LENGTH);
+            double logJ = x_log_normalize(j*BIN_SIZE, logMax);
+            double scaledMag = spectrogram_buffer[(i+spectrogram_buffer_loc)%SPECTROGRAM_LENGTH][j];
+            glVertex3f(2*aspectRatio*logJ-aspectRatio, 2*scaledMag-1, 8*(double)i / SPECTROGRAM_LENGTH - 4);
         }
         glEnd();
+    }
+}
+
+static void graph_spectrogram_3d_normal (int dbRange)
+{
+    glClear(GL_COLOR_BUFFER_BIT);
+    glLoadIdentity();
+    glTranslatef(-2.0,0.0,-8.0);
+    glRotatef(45.0,1.0,0.0,0.0);
+    glScalef(4.0,2.0,1.0);
+    double logMax = log10(SAMPLE_RATE/2);
+    for (int i = 0; i<FFT_SIZE/2+1; ++i)
+    {
+        glBegin(GL_LINE_STRIP);
+        for (int j = 0; j < SPECTROGRAM_LENGTH; ++j)
+        {
+            glColor3f(1-(.5+.5*((double)j / SPECTROGRAM_LENGTH)),1-((double)j / SPECTROGRAM_LENGTH),1-((double)j / SPECTROGRAM_LENGTH));
+            double logI = x_log_normalize(i*BIN_SIZE, logMax);
+            double scaledMag = spectrogram_buffer[(j+spectrogram_buffer_loc)%SPECTROGRAM_LENGTH][i];
+            glVertex3f(2*aspectRatio*logI-aspectRatio, 2*scaledMag-1, 8*(double)j / SPECTROGRAM_LENGTH - 4);
+        }
+        glEnd();
+    }
+}
+
+static void graph_spectrogram_3d_poly (int dbRange)
+{
+    glClear(GL_COLOR_BUFFER_BIT);
+    glLoadIdentity();
+    glTranslatef(-2.0,0.0,-8.0);
+    glRotatef(45.0,1.0,0.0,0.0);
+    glScalef(4.0,2.0,1.0);
+    double logMax = log10(SAMPLE_RATE/2);
+    for (int i = 0; i<SPECTROGRAM_LENGTH-1; ++i)
+    {
+        
+        glColor3f(1-(.5+.5*((double)i / SPECTROGRAM_LENGTH)),1-((double)i / SPECTROGRAM_LENGTH),1-((double)i / SPECTROGRAM_LENGTH));
+        for (int j = 0; j < FFT_SIZE/2; ++j)
+        {
+            glBegin(GL_QUADS);
+            double logJ0 = x_log_normalize(j*BIN_SIZE, logMax);
+            double logJ1 = x_log_normalize((j+1)*BIN_SIZE, logMax);
+            double scaledMag0 = spectrogram_buffer[(i+spectrogram_buffer_loc)%SPECTROGRAM_LENGTH][j];
+            double scaledMag1 = spectrogram_buffer[(i+spectrogram_buffer_loc+1)%SPECTROGRAM_LENGTH][j];
+            double scaledMag2 = spectrogram_buffer[(i+spectrogram_buffer_loc+1)%SPECTROGRAM_LENGTH][j+1];
+            double scaledMag3 = spectrogram_buffer[(i+spectrogram_buffer_loc)%SPECTROGRAM_LENGTH][j+1];
+            glVertex3f(2*aspectRatio*logJ0-aspectRatio, 2*scaledMag0-1, 8*(double)i / SPECTROGRAM_LENGTH - 4);
+            glVertex3f(2*aspectRatio*logJ0-aspectRatio, 2*scaledMag1-1, 8*(double)(i+1) / SPECTROGRAM_LENGTH - 4);
+            glVertex3f(2*aspectRatio*logJ1-aspectRatio, 2*scaledMag2-1, 8*(double)(i+1) / SPECTROGRAM_LENGTH - 4);
+            glVertex3f(2*aspectRatio*logJ1-aspectRatio, 2*scaledMag3-1, 8*(double)i / SPECTROGRAM_LENGTH - 4);
+            glEnd();
+        }
     }
 }
 
@@ -227,16 +284,19 @@ static void switch_focus(GLFWwindow* focus)
     glfwGetFramebufferSize(focus, &width, &height);
     aspectRatio = width / (float) height;
     
-    glViewport(0, 0, width, height);
+    //glViewport(0, 0, width, height);
     glClear(GL_COLOR_BUFFER_BIT);   
     glClearColor(1, 1, 1, 1);
 
-    // glMatrixMode(GL_PROJECTION);
-    // glLoadIdentity();
-    // glOrtho(-aspectRatio, aspectRatio, -1.f, 1.f, 1.f, -1.f);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+//    glTranslatef(0, 0, 0);
+    //glOrtho(-aspectRatio, aspectRatio, -1.f, 1.f, 1.f, -1.f);
+    glFrustum(-1.0, 1.0, -1.0, 1.0, 1.5, 20.0);
 
-    // glMatrixMode(GL_MODELVIEW);
-    // glLoadIdentity();
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    glViewport(0,0,width, height);
 }
 
 void gui_init ()
@@ -285,7 +345,7 @@ void gui_redraw ()
 //    graph_fft_mag(dbRange);
 //    graph_spectral_centroid();
 //    graph_dominant_pitch_lp();
-    graph_spectrogram_3d(dbRange);
+    graph_spectrogram_3d_poly(dbRange);
 
     glfwSwapBuffers(mainWindow);
 
