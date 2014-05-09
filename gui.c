@@ -178,6 +178,21 @@ static void graph_spectrogram_3d_normal (int dbRange)
     }
 }
 
+static void rainbow_calc(double s, GLdouble * ret)
+{
+  int num_stages = 6;
+  float a,b,c,d,e,f,rf,gf,bf;
+  a = 1.0/num_stages; b = 2*a; c = 3*a; d = 4*a; e = 5*a; f = 6*a;
+  
+  if ( s < a ) { rf = ( s - 0 ) * num_stages; rf = rf; gf = 0; bf = 0; }
+  else if ( s < b ) { bf = ( s - a ) * num_stages; rf = 1; gf = 0; bf = bf; }
+  else if ( s < c ) { rf = 1 - ( s - b ) * num_stages; rf = rf; gf = 0; bf = 1; }
+  else if ( s < d ) { gf = ( s - c ) * num_stages; rf = 0; gf = gf; bf = 1; }
+  else if ( s < e ) { bf = 1 - ( s - d ) * num_stages; rf = 0; gf = 1; bf = bf; }
+  else if ( s < f ) { rf = ( s - e ) * num_stages; bf = ( s - e ) * num_stages; rf = rf; gf = 1; bf = bf; }
+  
+  ret[0] = 1-rf; ret[1] = 1-gf; ret[2] = 1-bf;
+}
 static void graph_spectrogram_3d_poly (int dbRange)
 {
     glClear(GL_COLOR_BUFFER_BIT);
@@ -190,7 +205,10 @@ static void graph_spectrogram_3d_poly (int dbRange)
     double logMax = log10(SAMPLE_RATE/2);
     for (int i = 0; i<SPECTROGRAM_LENGTH-1; ++i)
     {
-        glColor3f(1.25-(.5+.5*((double)i / SPECTROGRAM_LENGTH)),1.25-((double)i / SPECTROGRAM_LENGTH),1.25-((double)i / SPECTROGRAM_LENGTH));
+        GLdouble cur_color[3] = {0,0,0};
+        rainbow_calc((double)i / SPECTROGRAM_LENGTH, cur_color);
+        glColor3dv(cur_color);
+        // glColor3f(1.25-(.5+.5*((double)i / SPECTROGRAM_LENGTH)),1.25-((double)i / SPECTROGRAM_LENGTH),1.25-((double)i / SPECTROGRAM_LENGTH));
         for (int j = 0; j < FFT_SIZE/2; ++j)
         {
             glBegin(GL_QUADS);
