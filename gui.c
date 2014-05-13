@@ -184,13 +184,13 @@ static void rainbow_calc(double s, GLdouble * ret)
   float a,b,c,d,e,f,rf,gf,bf;
   a = 1.0/num_stages; b = 2*a; c = 3*a; d = 4*a; e = 5*a; f = 6*a;
   
-  if ( s < a ) { rf = ( s - 0 ) * num_stages; rf = rf; gf = 0; bf = 0; }
-  else if ( s < b ) { bf = ( s - a ) * num_stages; rf = 1; gf = 0; bf = bf; }
-  else if ( s < c ) { rf = 1 - ( s - b ) * num_stages; rf = rf; gf = 0; bf = 1; }
-  else if ( s < d ) { gf = ( s - c ) * num_stages; rf = 0; gf = gf; bf = 1; }
-  else if ( s < e ) { bf = 1 - ( s - d ) * num_stages; rf = 0; gf = 1; bf = bf; }
-  else if ( s < f ) { rf = ( s - e ) * num_stages; bf = ( s - e ) * num_stages; rf = rf; gf = 1; bf = bf; }
-  
+  if      ( s < a ) { rf = ( s - 0 )     * num_stages; rf = rf; gf =  0; bf =  0; }
+  else if ( s < b ) { bf = ( s - a )     * num_stages; rf =  1; gf =  0; bf = bf; }
+  else if ( s < c ) { rf = 1 - ( s - b ) * num_stages; rf = rf; gf =  0; bf =  1; }
+  else if ( s < d ) { gf = ( s - c )     * num_stages; rf =  0; gf = gf; bf =  1; }
+  else if ( s < e ) { bf = 1 - ( s - d ) * num_stages; rf =  0; gf =  1; bf = bf; }
+  else if ( s < f ) { rf = ( s - e )     * num_stages; bf = ( s - e ) * num_stages; rf = rf; gf =  1; bf = bf; }
+
   ret[0] = 1-rf; ret[1] = 1-gf; ret[2] = 1-bf;
 }
 static void graph_spectrogram_3d_poly (int dbRange)
@@ -199,29 +199,29 @@ static void graph_spectrogram_3d_poly (int dbRange)
     glLoadIdentity();
     glTranslatef(-aspectRatio,4.0,-8.0);
     glRotatef(40.0,1.0,0.0,0.0);
-    glRotatef(45.0,0.0,-4.0,0.0);
+    glRotatef(20.0,0.0,-4.0,0.0);
     glScalef(6.0,3.0,1.0);
 
     double logMax = log10(SAMPLE_RATE/2);
     for (int i = 0; i<SPECTROGRAM_LENGTH-1; ++i)
     {
         GLdouble cur_color[3] = {0,0,0};
-        rainbow_calc((double)i / SPECTROGRAM_LENGTH, cur_color);
-        glColor3dv(cur_color);
-        // glColor3f(1.25-(.5+.5*((double)i / SPECTROGRAM_LENGTH)),1.25-((double)i / SPECTROGRAM_LENGTH),1.25-((double)i / SPECTROGRAM_LENGTH));
+        // rainbow_calc((double)i / SPECTROGRAM_LENGTH, cur_color);
+        // glColor3dv(cur_color);
+        glColor3f(1.25-(.5+.5*((double)i / SPECTROGRAM_LENGTH)),1.25-((double)i / SPECTROGRAM_LENGTH),1.25-((double)i / SPECTROGRAM_LENGTH));
         for (int j = 0; j < FFT_SIZE/2; ++j)
         {
             glBegin(GL_QUADS);
             double logJ0 = x_log_normalize(j*BIN_SIZE, logMax);
             double logJ1 = x_log_normalize((j+1)*BIN_SIZE, logMax);
-            double scaledMag0 = spectrogram_buffer[(i+spectrogram_buffer_loc)%SPECTROGRAM_LENGTH][j];
+            double scaledMag0 = spectrogram_buffer[(i+spectrogram_buffer_loc  )%SPECTROGRAM_LENGTH][j];
             double scaledMag1 = spectrogram_buffer[(i+spectrogram_buffer_loc+1)%SPECTROGRAM_LENGTH][j];
             double scaledMag2 = spectrogram_buffer[(i+spectrogram_buffer_loc+1)%SPECTROGRAM_LENGTH][j+1];
-            double scaledMag3 = spectrogram_buffer[(i+spectrogram_buffer_loc)%SPECTROGRAM_LENGTH][j+1];
-            glVertex3f(2*logJ0-1, 2*scaledMag0-1, 8*(double)i / SPECTROGRAM_LENGTH - 4);
+            double scaledMag3 = spectrogram_buffer[(i+spectrogram_buffer_loc  )%SPECTROGRAM_LENGTH][j+1];
+            glVertex3f(2*logJ0-1, 2*scaledMag0-1, 8*(double)i     / SPECTROGRAM_LENGTH - 4);
             glVertex3f(2*logJ0-1, 2*scaledMag1-1, 8*(double)(i+1) / SPECTROGRAM_LENGTH - 4);
             glVertex3f(2*logJ1-1, 2*scaledMag2-1, 8*(double)(i+1) / SPECTROGRAM_LENGTH - 4);
-            glVertex3f(2*logJ1-1, 2*scaledMag3-1, 8*(double)i / SPECTROGRAM_LENGTH - 4);
+            glVertex3f(2*logJ1-1, 2*scaledMag3-1, 8*(double)i     / SPECTROGRAM_LENGTH - 4);
             glEnd();
         }
         glFlush();
