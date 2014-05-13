@@ -82,9 +82,10 @@ int _iabs(int x) {
 
 // 2 power
 int _2power(int i) {
-	int res = 1, j;
-	for (j = 0; j < i; j++) res <<= 1;
-	return res;
+	// int res = 1, j;
+	// for (j = 0; j < i; j++) res <<= 1;
+	// return res;
+    return 1 << i;
 }
 
 //******************************
