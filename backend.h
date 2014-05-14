@@ -17,7 +17,7 @@
 #define BIN_SIZE          (SAMPLE_RATE/FFT_SIZE)
 #define ONSET_FFT_SIZE    64
 #define ONSET_THRESHOLD   0.00003125
-#define OFFSET_THRESHOLD  (ONSET_THRESHOLD/2)
+#define OFFSET_THRESHOLD  (ONSET_THRESHOLD/3)
 
 // FFT data
 extern double       fft_buffer[FFT_SIZE];
