@@ -13,10 +13,10 @@
 // FFT data
 double       fft_buffer[FFT_SIZE];
 int          fft_buffer_loc;
-fftw_complex fft[FFT_SIZE/2 + 1];
+fftw_complex fft[FFT_SIZE];
 double       fft_mag[FFT_SIZE/2 + 1];
-fftw_complex fft_fft[(FFT_SIZE/2 +1)/2 +1];
-double       fft_fft_mag[(FFT_SIZE/2+1)/2+1];
+fftw_complex fft_fft[FFT_SIZE/2 + 1];
+double       fft_fft_mag[FFT_SIZE/2 + 1];
 double       harmonics[FFT_SIZE/2+1];
 
 // FFT characteristics
@@ -60,8 +60,7 @@ bool backend_push_sample (float sample)
     if (onset_fft_buffer_loc==ONSET_FFT_SIZE)
     {
         onset_fft_buffer_loc = 0;
-        double tmp[ONSET_FFT_SIZE];
-        calc_fft(onset_fft_buffer, onset_fft, tmp, ONSET_FFT_SIZE);
+        calc_fft(onset_fft_buffer, onset_fft, ONSET_FFT_SIZE);
         calc_fft_mag(onset_fft, onset_fft_mag, ONSET_FFT_SIZE/2+1);
         onset_average_amplitude = calc_avg_amplitude(onset_fft_mag, ONSET_FFT_SIZE, SAMPLE_RATE, 0, SAMPLE_RATE/2);
     }
@@ -73,8 +72,7 @@ bool backend_push_sample (float sample)
     if (fft_buffer_loc==FFT_SIZE)
     {
         fft_buffer_loc=0;
-        double tmp[FFT_SIZE];
-        calc_fft(fft_buffer, fft, tmp, FFT_SIZE);
+        calc_fft(fft_buffer, fft, FFT_SIZE);
         calc_fft_mag(fft, fft_mag, FFT_SIZE);
         // double tmp2[FFT_SIZE/2 + 1];
         switch (window_function) {

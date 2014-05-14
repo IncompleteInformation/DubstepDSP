@@ -7,11 +7,10 @@
 #define E 2.71828182845904523536028747135266249775724709369995
 
 
-void calc_fft (double* sample, fftw_complex* fft, double* tmp, size_t sample_size)
+void calc_fft (double* sample, fftw_complex* fft, size_t sample_size)
 {
-    for (size_t i = 0; i < sample_size; ++i) tmp[i] = sample[i];
-    fftw_plan plan_forward = fftw_plan_dft_r2c_1d((int)sample_size, tmp, fft, FFTW_ESTIMATE);
-    fftw_execute (plan_forward);
+    fftw_plan plan_forward = fftw_plan_dft_r2c_1d((int)sample_size, sample, fft, FFTW_ESTIMATE);
+    fftw_execute(plan_forward);
     fftw_destroy_plan(plan_forward);
 }
 

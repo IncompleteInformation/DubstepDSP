@@ -26,6 +26,13 @@ bleep: backend.c dywapitchtrack.c gui.c main.c midi.c pitch.c serial.c windowing
 bleep_test: bleep
 	@./bleep
 
+filter: filter.c filter.h filter_test.c
+	@cc ${FLAGS} filter_test.c filter.c -o filter_test \
+		-lfftw3
+
+filter_test: filter
+	@./filter_test
+
 midi: midi.c midi.h midi_test.c
 	@cc ${FLAGS} midi_test.c midi.c -o midi_test \
 		-lportmidi

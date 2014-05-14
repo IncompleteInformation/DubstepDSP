@@ -1,9 +1,10 @@
 /a.out
 /bench
 /bleep
-/glove_test
+/filter_test
 /midi_test
 /pitch_test
+/serial_test
 /simulator
 /glfw*
 

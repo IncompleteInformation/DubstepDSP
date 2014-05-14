@@ -3,9 +3,8 @@
 // Perform a fast fourier transform on sample, storing the result in fft
 //   sample:      input array of length sample_size
 //   fft:         output array of length sample_size/2+1
-//   tmp:         temporary storage array of length sample_size
 //   sample_size: the length of the sample array
-void calc_fft (double* sample, fftw_complex* fft, double* tmp, size_t sample_size);
+void calc_fft (double* sample, fftw_complex* fft, size_t sample_size);
 
 // Compute the magnitude of each bin of fft, storing the result in fft_mag
 //   fft:         input array of length sample_size/2+1
