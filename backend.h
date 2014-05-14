@@ -16,7 +16,7 @@
 #define FFT_SIZE          1024 // 1024 = 23ms delay, 43Hz bins
 #define BIN_SIZE          (SAMPLE_RATE/FFT_SIZE)
 #define ONSET_FFT_SIZE    64
-#define ONSET_THRESHOLD   0 // 0.00003125
+#define ONSET_THRESHOLD   0.00003125
 #define OFFSET_THRESHOLD  (ONSET_THRESHOLD/2)
 
 // FFT data

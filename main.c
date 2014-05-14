@@ -118,7 +118,8 @@ int main (void)
                 {
                     if (midi_channel!=ser_buf[i]+128)
                     {
-                        if ((ser_buf[i]+128 == 4 )|| (midi_channel == 4)) midi_write(Pm_Message(0xB0|midi_channel, 10, 0)); //toggle solo
+                        if (ser_buf[i]+128 == 3) midi_write(Pm_Message(0xB0, 10, 127)); //toggle solo
+                        if (midi_channel == 3) midi_write(Pm_Message(0xB0, 10, 0)); //toggle solo
                         midi_channel = ser_buf[i]+128;
                         midi_NOFF(); // clear all notes
                         note_on = 0;

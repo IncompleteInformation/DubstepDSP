@@ -9,6 +9,7 @@
 
 // #define GLFW_INCLUDE_GLCOREARB // Enable OpenGL 3
 #include <GLFW/glfw3.h>
+#include <GL/freeglut.h>
 
 #define PITCHTRACKERLISTSIZE 256
 #define SPECTROGRAM_LENGTH   100
@@ -22,8 +23,9 @@ static float  aspectRatio;
 static float  pitchTrackerList[PITCHTRACKERLISTSIZE];
 static pthread_mutex_t spectrogram_lock;
 
-int spectrogram_buffer_loc;
-double spectrogram_buffer[SPECTROGRAM_LENGTH][FFT_SIZE/2+1];
+static int spectrogram_buffer_loc;
+static double spectrogram_buffer[SPECTROGRAM_LENGTH][FFT_SIZE/2+1];
+static double pitch_lp_buffer[SPECTROGRAM_LENGTH];
 
 static void on_key_press (GLFWwindow* window, int key, int scancode, int action, int mods)
 {
@@ -197,10 +199,10 @@ static void graph_spectrogram_3d_poly (int dbRange)
 {
     glClear(GL_COLOR_BUFFER_BIT);
     glLoadIdentity();
-    glTranslatef(-aspectRatio,4.0,-8.0);
+    glTranslatef(-aspectRatio,0.0,-8.0);
     glRotatef(40.0,1.0,0.0,0.0);
-    glRotatef(20.0,0.0,-4.0,0.0);
-    glScalef(6.0,3.0,1.0);
+    // glRotatef(20.0,0.0,-4.0,0.0);
+    glScalef(6.0,2.0,1.0);
 
     double logMax = log10(SAMPLE_RATE/2);
     for (int i = 0; i<SPECTROGRAM_LENGTH-1; ++i)
@@ -214,8 +216,8 @@ static void graph_spectrogram_3d_poly (int dbRange)
             glBegin(GL_QUADS);
             double logJ0 = x_log_normalize(j*BIN_SIZE, logMax);
             double logJ1 = x_log_normalize((j+1)*BIN_SIZE, logMax);
-            double scaledMag0 = spectrogram_buffer[(i+spectrogram_buffer_loc  )%SPECTROGRAM_LENGTH][j];
-            double scaledMag1 = spectrogram_buffer[(i+spectrogram_buffer_loc+1)%SPECTROGRAM_LENGTH][j];
+            double scaledMag0 = spectrogram_buffer[(i+spectrogram_buffer_loc  )%SPECTROGRAM_LENGTH][j  ];
+            double scaledMag1 = spectrogram_buffer[(i+spectrogram_buffer_loc+1)%SPECTROGRAM_LENGTH][j  ];
             double scaledMag2 = spectrogram_buffer[(i+spectrogram_buffer_loc+1)%SPECTROGRAM_LENGTH][j+1];
             double scaledMag3 = spectrogram_buffer[(i+spectrogram_buffer_loc  )%SPECTROGRAM_LENGTH][j+1];
             glVertex3f(2*logJ0-1, 2*scaledMag0-1, 8*(double)i     / SPECTROGRAM_LENGTH - 4);
@@ -224,6 +226,18 @@ static void graph_spectrogram_3d_poly (int dbRange)
             glVertex3f(2*logJ1-1, 2*scaledMag3-1, 8*(double)i     / SPECTROGRAM_LENGTH - 4);
             glEnd();
         }
+        glBegin(GL_QUADS);
+        glColor3f(1.25-(.5+.5*((double)i / SPECTROGRAM_LENGTH)),1.25-(.5+.5*(double)i / SPECTROGRAM_LENGTH),1.25-((double)i / SPECTROGRAM_LENGTH));
+        double curFreq  = pitch_lp_buffer[(i+spectrogram_buffer_loc  )%SPECTROGRAM_LENGTH];
+        double prevFreq = pitch_lp_buffer[(i+spectrogram_buffer_loc+1)%SPECTROGRAM_LENGTH];
+        double logCurFreq  = x_log_normalize(curFreq , logMax);
+        double logPrevFreq = x_log_normalize(prevFreq, logMax);
+        glVertex3f(2 * logCurFreq  -1, 2, 8*(double)i     / SPECTROGRAM_LENGTH - 4);
+        glVertex3f(2 * logPrevFreq -1, 2, 8*(double)(i+1) / SPECTROGRAM_LENGTH - 4);
+        glVertex3f(2 * logPrevFreq -1, 0, 8*(double)(i+1) / SPECTROGRAM_LENGTH - 4);
+        glVertex3f(2 * logCurFreq  -1, 0, 8*(double)i     / SPECTROGRAM_LENGTH - 4);
+        glEnd();
+
         glFlush();
     }
 }
@@ -355,8 +369,8 @@ void gui_fft_filled ()
     pthread_mutex_lock(&spectrogram_lock);
     for (int i = 0; i < FFT_SIZE/2+1; ++i)
     {
-        if (note_on) spectrogram_buffer[spectrogram_buffer_loc][i] = db_normalize(fft_mag[i], 1, 96);
-        else spectrogram_buffer[spectrogram_buffer_loc][i] = 0;
+        spectrogram_buffer[spectrogram_buffer_loc][i] = db_normalize(fft_mag[i], 1, 96);
+        pitch_lp_buffer[spectrogram_buffer_loc] = dominant_frequency_lp;
     }
     spectrogram_buffer_loc = (spectrogram_buffer_loc+1)%SPECTROGRAM_LENGTH;
     pthread_mutex_unlock(&spectrogram_lock);
@@ -368,7 +382,7 @@ void gui_redraw ()
  
     //lock   
 //    graph_log_lines();
-//    graph_fft_mag(dbRange);
+   // graph_fft_mag(dbRange);
 //    graph_spectral_centroid();
 //    graph_dominant_pitch_lp();
     pthread_mutex_lock(&spectrogram_lock);
