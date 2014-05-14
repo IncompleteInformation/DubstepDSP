@@ -2,7 +2,7 @@ FLAGS=-O3
 
 default: bleep_test
 
-bench: backend.c bench.c dywapitchtrack.c pitch.c windowing.c
+bench: backend.* bench.* dywapitchtrack.* pitch.* windowing.*
 	@cc ${FLAGS} backend.c bench.c dywapitchtrack.c pitch.c windowing.c -o bench \
 		-lfftw3 \
 		-lsndfile \
