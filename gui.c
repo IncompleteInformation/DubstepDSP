@@ -9,7 +9,7 @@
 
 // #define GLFW_INCLUDE_GLCOREARB // Enable OpenGL 3
 #include <GLFW/glfw3.h>
-#include <GL/freeglut.h>
+// #include <GL/freeglut.h>
 
 #define PITCHTRACKERLISTSIZE 256
 #define SPECTROGRAM_LENGTH   100
@@ -208,9 +208,9 @@ static void graph_spectrogram_3d_poly (int dbRange)
     for (int i = 0; i<SPECTROGRAM_LENGTH-1; ++i)
     {
         GLdouble cur_color[3] = {0,0,0};
-        // rainbow_calc((double)i / SPECTROGRAM_LENGTH, cur_color);
-        // glColor3dv(cur_color);
-        glColor3f(1.25-(.5+.5*((double)i / SPECTROGRAM_LENGTH)),1.25-((double)i / SPECTROGRAM_LENGTH),1.25-((double)i / SPECTROGRAM_LENGTH));
+        rainbow_calc((double)i / SPECTROGRAM_LENGTH, cur_color);
+        glColor3dv(cur_color);
+        // glColor3f(1.25-(.5+.5*((double)i / SPECTROGRAM_LENGTH)),1.25-((double)i / SPECTROGRAM_LENGTH),1.25-((double)i / SPECTROGRAM_LENGTH));
         for (int j = 0; j < FFT_SIZE/2; ++j)
         {
             glBegin(GL_QUADS);
@@ -321,7 +321,7 @@ static void switch_focus(GLFWwindow* focus)
     aspectRatio = width / (float) height;
     
     //glViewport(0, 0, width, height);
-    glClear(GL_COLOR_BUFFER_BIT);   
+    glClear(GL_COLOR_BUFFER_BIT);
     glClearColor(1, 1, 1, 1);
 
     glMatrixMode(GL_PROJECTION);
