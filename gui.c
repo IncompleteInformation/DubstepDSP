@@ -386,7 +386,7 @@ void gui_redraw ()
 //    graph_spectral_centroid();
 //    graph_dominant_pitch_lp();
     pthread_mutex_lock(&spectrogram_lock);
-    graph_spectrogram_3d_poly(dbRange);
+    // graph_spectrogram_3d_poly(dbRange);
     pthread_mutex_unlock(&spectrogram_lock);
 
     glfwSwapBuffers(mainWindow);
