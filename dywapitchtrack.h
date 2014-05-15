@@ -102,6 +102,9 @@ void dywapitch_inittracking(dywapitchtracker *pitchtracker);
 // return 0.0 if no pitch was found (sound too low, noise, etc..)
 double dywapitch_computepitch(dywapitchtracker *pitchtracker, double * samples, int startsample, int samplecount);
 
+// exposed for Formant tracking
+double _dywapitch_computeWaveletPitch(double * samples, int startsample, int samplecount);
+
 #ifdef __cplusplus
 } // extern "C"
 #endif

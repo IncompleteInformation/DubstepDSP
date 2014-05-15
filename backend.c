@@ -1,5 +1,6 @@
 #include "backend.h"
 #include "dywapitchtrack.h"
+#include "filter.h"
 #include "pitch.h"
 #include "windowing.h"
 
@@ -15,8 +16,9 @@ double       fft_buffer[FFT_SIZE];
 int          fft_buffer_loc;
 fftw_complex fft[FFT_SIZE];
 double       fft_mag[FFT_SIZE/2 + 1];
+double       fft_band_mag[FFT_SIZE/2 + 1];
 fftw_complex fft_fft[FFT_SIZE/2 + 1];
-double       fft_fft_mag[FFT_SIZE/2 + 1];
+double       fft_fft_mag[(FFT_SIZE/2 + 1)/2 + 1];
 double       harmonics[FFT_SIZE/2+1];
 
 // FFT characteristics
@@ -41,6 +43,10 @@ int          onset_triggered;
 // Hysterisis
 double       prev_spectral_centroid = -INFINITY;
 double       prev_output_pitch = -INFINITY;
+
+// Formants
+double       formant_buffer[FFT_SIZE];
+double       formant_pitch;
 
 // // Dynamic wavelet pitch tracker
 // dywapitchtracker pitch_tracker;
@@ -93,12 +99,20 @@ bool backend_push_sample (float sample)
         //calc_fft_mag(fft_fft, fft_fft_mag, FFT_SIZE/2 + 1);
         dominant_frequency = 0; //dominant_freq(fft, fft_mag, FFT_SIZE, SAMPLE_RATE);
         spectral_centroid = calc_spectral_centroid(fft_mag,FFT_SIZE, SAMPLE_RATE);
-        // dominant_frequency_lp = dominant_freq_lp(fft, fft_mag, FFT_SIZE, SAMPLE_RATE, 500);
-        dominant_frequency_lp = dywapitch_computepitch(&pitch_tracker, fft_buffer, 0, FFT_SIZE);
+        dominant_frequency_lp = dominant_freq_lp(fft, fft_mag, FFT_SIZE, SAMPLE_RATE, 5000);
+        // dominant_frequency_lp = dominant_freq_bp(fft, fft_mag, FFT_SIZE, SAMPLE_RATE, 900, 2800);
+        // dominant_frequency_lp = dywapitch_computepitch(&pitch_tracker, fft_buffer, 0, FFT_SIZE);
         average_amplitude = calc_avg_amplitude(fft_mag, FFT_SIZE, SAMPLE_RATE, 0, FFT_SIZE/2);
         spectral_crest = 0; //calc_spectral_crest(fft_mag, FFT_SIZE, SAMPLE_RATE);
         spectral_flatness = 0; //calc_spectral_flatness(fft_mag, FFT_SIZE, SAMPLE_RATE, 0, SAMPLE_RATE/2);
         harmonic_average = 0; //calc_harmonics(fft, fft_mag, FFT_SIZE, SAMPLE_RATE); //useless and computationally intensive
+
+        // Formants
+        // band_pass(fft_buffer, formant_buffer, FFT_SIZE, SAMPLE_RATE, FORMANT_MIN_FREQ, FORMANT_MAX_FREQ);
+        // formant_pitch = _dywapitch_computeWaveletPitch(formant_buffer, 0, FFT_SIZE);
+        // printf("%f, %f\n", dominant_frequency_lp, formant_pitch);
+
+        // printf("%f\n", spectral_centroid);
 
         return true;
     }

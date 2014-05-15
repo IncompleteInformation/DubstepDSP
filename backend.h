@@ -18,14 +18,16 @@
 #define ONSET_FFT_SIZE    64
 #define ONSET_THRESHOLD   0.00003125
 #define OFFSET_THRESHOLD  (ONSET_THRESHOLD/3)
+#define FORMANT_MIN_FREQ  0.0
+#define FORMANT_MAX_FREQ  44100.0
 
 // FFT data
 extern double       fft_buffer[FFT_SIZE];
 extern int          fft_buffer_loc;
-extern fftw_complex fft[FFT_SIZE/2 + 1];
+extern fftw_complex fft[FFT_SIZE];
 extern double       fft_mag[FFT_SIZE/2 + 1];
-extern fftw_complex fft_fft[(FFT_SIZE/2 +1)/2 +1];
-extern double       fft_fft_mag[(FFT_SIZE/2+1)/2+1];
+extern fftw_complex fft_fft[FFT_SIZE/2 + 1];
+extern double       fft_fft_mag[(FFT_SIZE/2 + 1)/2 + 1];
 extern double       harmonics[FFT_SIZE/2+1];
 
 // FFT characteristics

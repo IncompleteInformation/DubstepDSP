@@ -2,8 +2,8 @@ FLAGS=-O3
 
 default: bleep_test
 
-bench: backend.* bench.* dywapitchtrack.* pitch.* windowing.*
-	@cc ${FLAGS} backend.c bench.c dywapitchtrack.c pitch.c windowing.c -o bench \
+bench: backend.* bench.* dywapitchtrack.* filter.* pitch.* windowing.*
+	@cc ${FLAGS} backend.c bench.c dywapitchtrack.c filter.c pitch.c windowing.c -o bench \
 		-lfftw3 \
 		-lsndfile \
 		-lglfw3 \
@@ -12,8 +12,8 @@ bench: backend.* bench.* dywapitchtrack.* pitch.* windowing.*
 		-framework OpenGL \
 		-framework CoreVideo
 
-bleep: backend.c dywapitchtrack.c gui.c main.c midi.c pitch.c serial.c windowing.c
-	@cc ${FLAGS} backend.c dywapitchtrack.c gui.c main.c midi.c pitch.c serial.c windowing.c -o bleep \
+bleep: backend.* dywapitchtrack.* filter.* gui.* main.* midi.* pitch.* serial.* windowing.*
+	@cc ${FLAGS} backend.c dywapitchtrack.c filter.c gui.c main.c midi.c pitch.c serial.c windowing.c -o bleep \
 		-lfftw3 \
 		-lglfw3 \
 		-lportaudio \

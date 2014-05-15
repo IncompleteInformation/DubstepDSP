@@ -7,4 +7,4 @@
 //   sample_rate: the sampling rate (in Hz) of the original sample
 //   min_freq:    
 //   max_freq:
-void calc_fft (double* sample, double* output, size_t sample_size, double sample_rate, double min_freq, double max_freq);
+void band_pass (double* sample, double* output, size_t sample_size, double sample_rate, double min_freq, double max_freq);
