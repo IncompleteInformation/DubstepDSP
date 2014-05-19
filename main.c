@@ -16,6 +16,8 @@
 #include <fftw3.h>
 #include <portmidi.h>
 
+#define NO_BLUETOOTH 1
+
 static void pa_check_error (PaError error)
 {
     if (error == paNoError) return;
@@ -58,12 +60,16 @@ int main (void)
     midi_init();
     
     // Initialize RS-232 connection to glove_
-    int ser_live;
+    int ser_live, ser_out_live;
     int ser_buf_size = 256;
     char ser_buf[ser_buf_size];
     int midi_channel = 0;
     int angle = 0; //the glove_ is held at an angle, since glove commands come in in pairs, we need to pick just one.
-    ser_live = serial_init();
+    
+    if (!NO_BLUETOOTH){
+        ser_live = serial_init();
+        ser_out_live = serial_out_init();
+    }
 
     // Initialize PortAudio
     pa_check_error(Pa_Initialize());
@@ -122,6 +128,7 @@ int main (void)
                         if (midi_channel == 3) midi_write(Pm_Message(0xB0, 10, 0)); //toggle solo
                         midi_channel = ser_buf[i]+128;
                         midi_NOFF(); // clear all notes
+                        if (ser_out_live) serial_out_clear(); //turn off all colors
                         note_on = 0;
                     }
                 }
@@ -170,6 +177,7 @@ int main (void)
             
             if (ser_live) midi_write(Pm_Message(0xB0/*|midi_channel*/, 0, angle));
             midi_write(Pm_Message(0xB0/*|midi_channel*/, 1, outputCentroid));
+            if (ser_out_live) serial_out_write((char)((outputCentroid/2)|(midi_channel<<6)+1));
 //            printf("centroid out: %03u pitch out: %04u\n", outputCentroid, outputPitch);
             midi_write(Pm_Message(0xE0|midi_channel, lsb_7, msb_7));
         }
@@ -178,6 +186,7 @@ int main (void)
             if (note_on)
             {
                 midi_write(Pm_Message(0x80|midi_channel, 54, 100));
+                if (ser_out_live) serial_out_clear(); //turn off all colors
                 // printf("midi off\n");
                 note_on = 0;
                 dywapitch_inittracking(&pitch_tracker);

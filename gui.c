@@ -9,7 +9,7 @@
 
 // #define GLFW_INCLUDE_GLCOREARB // Enable OpenGL 3
 #include <GLFW/glfw3.h>
-// #include <GL/freeglut.h>
+#include <GL/freeglut.h>
 
 #define PITCHTRACKERLISTSIZE 256
 #define SPECTROGRAM_LENGTH   100
@@ -241,7 +241,52 @@ static void graph_spectrogram_3d_poly (int dbRange)
         glFlush();
     }
 }
-
+static void draw_square_cw(float l)
+{
+    glBegin(GL_QUADS);
+    glVertex3f(0, 0, 0);
+    glVertex3f(0, l, 0);
+    glVertex3f(l, l, 0);
+    glVertex3f(l, 0, 0);
+    glEnd();
+}
+static void draw_square_ccw(float l)
+{
+    glBegin(GL_QUADS);
+    glVertex3f(0, 0, 0);
+    glVertex3f(l, 0, 0);
+    glVertex3f(l, l, 0);
+    glVertex3f(0, l, 0);
+    glEnd();
+}
+static void draw_cube(float l)
+{
+    glColor3f(0,0,0);
+    //front
+    draw_square_cw(l);
+    //bottom
+    glLoadIdentity();
+    glRotatef(90, -1, 0, 0);
+    draw_square_cw(l);
+    //left
+    glLoadIdentity();
+    glRotatef(90, 0,  1, 0);
+    draw_square_cw(l);
+    //back
+    glLoadIdentity();
+    glTranslatef(0, 0, -l);
+    draw_square_ccw(l);
+    //top
+    glLoadIdentity();
+    glRotatef(90, -1, 0, 0);
+    glTranslatef(0, 1, 0);
+    draw_square_ccw(l);
+    //right
+    glLoadIdentity();
+    glRotatef(90, 0, 1, 0);
+    glTranslatef(1, 0, 0);
+    draw_square_ccw(l);
+}
 static void graph_x_log_lines()
 {
     glBegin(GL_LINES);
@@ -326,9 +371,9 @@ static void switch_focus(GLFWwindow* focus)
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-//    glTranslatef(0, 0, 0);
+    //glTranslatef(0, 0, 0);
     //glOrtho(-aspectRatio, aspectRatio, -1.f, 1.f, 1.f, -1.f);
-    glFrustum(-1.0, 1.0, -1.0, 1.0, 1.5, 20.0);
+    //glFrustum(-1.0, 1.0, -1.0, 1.0, 1.5, 20.0);
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
@@ -341,8 +386,8 @@ void gui_init ()
     dbRange = 96;
     glfwSetErrorCallback(on_glfw_error);
     if (!glfwInit()) exit(EXIT_FAILURE);
-    mainWindow = glfwCreateWindow(640, 480, "Main Analysis", NULL, NULL);
     trackerWindow = glfwCreateWindow(640, 480, "Pitch Tracking", NULL, NULL);
+    mainWindow = glfwCreateWindow(640, 480, "Main Analysis", NULL, NULL);
     if (!mainWindow || !trackerWindow)
     {
         glfwTerminate();
@@ -381,13 +426,14 @@ void gui_redraw ()
     switch_focus(mainWindow);
  
     //lock   
-//    graph_log_lines();
-   // graph_fft_mag(dbRange);
-//    graph_spectral_centroid();
-//    graph_dominant_pitch_lp();
+    // graph_log_lines();
+    // graph_fft_mag(dbRange);
+    // graph_spectral_centroid();
+    // graph_dominant_pitch_lp();
     pthread_mutex_lock(&spectrogram_lock);
     // graph_spectrogram_3d_poly(dbRange);
     pthread_mutex_unlock(&spectrogram_lock);
+    draw_cube(1);
 
     glfwSwapBuffers(mainWindow);
 
