@@ -27,6 +27,8 @@
 		CD4C4E0118FBA87E008E0329 /* libportaudio.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 046F406D18F52A56002BC68A /* libportaudio.a */; };
 		CD4C4E0B18FBA8C7008E0329 /* pitch_test.c in Sources */ = {isa = PBXBuildFile; fileRef = CD4C4E0A18FBA8C7008E0329 /* pitch_test.c */; };
 		CD4C4E0C18FBA904008E0329 /* pitch.c in Sources */ = {isa = PBXBuildFile; fileRef = 046F405618F52393002BC68A /* pitch.c */; };
+		CD840053192AC6780013B34F /* dywapitchtrack.c in Sources */ = {isa = PBXBuildFile; fileRef = CD840051192AC6770013B34F /* dywapitchtrack.c */; };
+		CD840054192AC6780013B34F /* dywapitchtrack.c in Sources */ = {isa = PBXBuildFile; fileRef = CD840051192AC6770013B34F /* dywapitchtrack.c */; };
 		CDB29B7218FCEB8300A5FFB7 /* pitch_tests in CopyFiles */ = {isa = PBXBuildFile; fileRef = CDCE460B18FBAB0000DECC82 /* pitch_tests */; };
 		CDB29B7818FCEBC300A5FFB7 /* midi_test.c in Sources */ = {isa = PBXBuildFile; fileRef = CDB29B7718FCEBC300A5FFB7 /* midi_test.c */; };
 		CDB29B7918FCEBC800A5FFB7 /* midi.c in Sources */ = {isa = PBXBuildFile; fileRef = CDB29B6518FCEB7100A5FFB7 /* midi.c */; };
@@ -91,6 +93,8 @@
 		CD0A82C218FBA9CB00145912 /* libsndfile.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libsndfile.a; path = /Users/Calder/Developer/Bleep/../../../../usr/local/Cellar/libsndfile/1.0.25/lib/libsndfile.a; sourceTree = "<absolute>"; };
 		CD17F51B18FBA17A00A7FAC7 /* libportmidi.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libportmidi.dylib; path = /usr/local/Cellar/portmidi/217/lib/libportmidi.dylib; sourceTree = "<absolute>"; };
 		CD4C4E0A18FBA8C7008E0329 /* pitch_test.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pitch_test.c; sourceTree = "<group>"; };
+		CD840051192AC6770013B34F /* dywapitchtrack.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = dywapitchtrack.c; sourceTree = "<group>"; };
+		CD840052192AC6770013B34F /* dywapitchtrack.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dywapitchtrack.h; sourceTree = "<group>"; };
 		CD886B5218FCEC84003F5FED /* bleep */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = bleep; sourceTree = BUILT_PRODUCTS_DIR; };
 		CD886B5318FCEC84003F5FED /* pitch_test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = pitch_test; sourceTree = BUILT_PRODUCTS_DIR; };
 		CD886B5418FCEC84003F5FED /* midi_test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = midi_test; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -154,6 +158,8 @@
 		046F404618F5222D002BC68A /* Source */ = {
 			isa = PBXGroup;
 			children = (
+				CD840051192AC6770013B34F /* dywapitchtrack.c */,
+				CD840052192AC6770013B34F /* dywapitchtrack.h */,
 				04EACF131914924B007DD01E /* gui.c */,
 				04EACF141914924B007DD01E /* gui.h */,
 				04EACF1019148C6B007DD01E /* backend.c */,
@@ -313,6 +319,7 @@
 				CDB29B7A18FCEBCE00A5FFB7 /* midi.c in Sources */,
 				0403A7F11900B68B00EB02A9 /* serial.c in Sources */,
 				04C492C3190E3E5B005ABDA9 /* windowing.c in Sources */,
+				CD840053192AC6780013B34F /* dywapitchtrack.c in Sources */,
 				04EACF1219148C6B007DD01E /* backend.c in Sources */,
 				046F405D18F52393002BC68A /* pitch.c in Sources */,
 				046F405A18F52393002BC68A /* main.c in Sources */,
@@ -325,6 +332,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				CD4C4E0C18FBA904008E0329 /* pitch.c in Sources */,
+				CD840054192AC6780013B34F /* dywapitchtrack.c in Sources */,
 				CD4C4E0B18FBA8C7008E0329 /* pitch_test.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
