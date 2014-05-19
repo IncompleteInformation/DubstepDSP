@@ -378,7 +378,7 @@ static void switch_focus(GLFWwindow* focus)
 
     glfwMakeContextCurrent(focus);
     glfwSetKeyCallback(focus, on_key_press);
-    
+    glEnable(GL_DEPTH_TEST);
     glfwGetFramebufferSize(focus, &width, &height);
     aspectRatio = width / (float) height;
     
