@@ -27,6 +27,8 @@ static int spectrogram_buffer_loc;
 static double spectrogram_buffer[SPECTROGRAM_LENGTH][FFT_SIZE/2+1];
 static double pitch_lp_buffer[SPECTROGRAM_LENGTH];
 
+static float g_rotate = 0;
+
 static void on_key_press (GLFWwindow* window, int key, int scancode, int action, int mods)
 {
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
@@ -261,31 +263,42 @@ static void draw_square_ccw(float l)
 }
 static void draw_cube(float l)
 {
-    glColor3f(0,0,0);
+    
     //front
+    glColor3f(1,0,0);
     draw_square_cw(l);
     //bottom
-    glLoadIdentity();
+    glColor3f(0,1,0);
+    glPushMatrix();
     glRotatef(90, -1, 0, 0);
-    draw_square_cw(l);
+    draw_square_ccw(l);
+    glPopMatrix();
     //left
-    glLoadIdentity();
+    glColor3f(0,0,1);
+    glPushMatrix();
     glRotatef(90, 0,  1, 0);
-    draw_square_cw(l);
+    draw_square_ccw(l);
+    glPopMatrix();
     //back
-    glLoadIdentity();
+    glColor3f(1,1,0);
+    glPushMatrix();
     glTranslatef(0, 0, -l);
     draw_square_ccw(l);
+    glPopMatrix();
     //top
-    glLoadIdentity();
+    glColor3f(1,0,1);
+    glPushMatrix();
     glRotatef(90, -1, 0, 0);
-    glTranslatef(0, 1, 0);
-    draw_square_ccw(l);
+    glTranslatef(0, 0, 1);
+    draw_square_cw(l);
+    glPopMatrix();
     //right
-    glLoadIdentity();
+    glColor3f(0,1,1);
+    glPushMatrix();
     glRotatef(90, 0, 1, 0);
-    glTranslatef(1, 0, 0);
-    draw_square_ccw(l);
+    glTranslatef(0, 0, 1);
+    draw_square_cw(l);
+    glPopMatrix();
 }
 static void graph_x_log_lines()
 {
@@ -355,6 +368,10 @@ static void graph_NON_NOFFs()
     glEnd();
 }
 
+static void orbit()
+{
+
+}
 static void switch_focus(GLFWwindow* focus)
 {
     glfwPollEvents();
@@ -366,18 +383,27 @@ static void switch_focus(GLFWwindow* focus)
     aspectRatio = width / (float) height;
     
     //glViewport(0, 0, width, height);
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glClearColor(1, 1, 1, 1);
+    glViewport(0,0,width, height);
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
+    gluPerspective(90, aspectRatio, .1, 100);
+
     //glTranslatef(0, 0, 0);
     //glOrtho(-aspectRatio, aspectRatio, -1.f, 1.f, 1.f, -1.f);
     //glFrustum(-1.0, 1.0, -1.0, 1.0, 1.5, 20.0);
 
     glMatrixMode(GL_MODELVIEW);
+
     glLoadIdentity();
-    glViewport(0,0,width, height);
+    gluLookAt(0, 0, 5, 0, 0, 0, 0, 1, 0);
+    
+    glRotatef(g_rotate, 1, 1, 1);
+    glTranslatef(-.5, -.5, .5);
+    g_rotate += .5;
+    
 }
 
 void gui_init ()
@@ -430,9 +456,9 @@ void gui_redraw ()
     // graph_fft_mag(dbRange);
     // graph_spectral_centroid();
     // graph_dominant_pitch_lp();
-    pthread_mutex_lock(&spectrogram_lock);
+    // pthread_mutex_lock(&spectrogram_lock);
     // graph_spectrogram_3d_poly(dbRange);
-    pthread_mutex_unlock(&spectrogram_lock);
+    // pthread_mutex_unlock(&spectrogram_lock);
     draw_cube(1);
 
     glfwSwapBuffers(mainWindow);
