@@ -60,7 +60,7 @@ int main (void)
     midi_init();
     
     // Initialize RS-232 connection to glove_
-    int ser_live, ser_out_live;
+    int ser_live=0, ser_out_live=0;
     int ser_buf_size = 256;
     char ser_buf[ser_buf_size];
     int midi_channel = 0;
