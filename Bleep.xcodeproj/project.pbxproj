@@ -12,7 +12,6 @@
 		046F405A18F52393002BC68A /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 046F405118F52393002BC68A /* main.c */; };
 		046F405D18F52393002BC68A /* pitch.c in Sources */ = {isa = PBXBuildFile; fileRef = 046F405618F52393002BC68A /* pitch.c */; };
 		046F406218F523E8002BC68A /* libfftw3.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 046F406118F523E8002BC68A /* libfftw3.a */; };
-		046F406418F529A9002BC68A /* libglfw3.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 046F406318F529A9002BC68A /* libglfw3.a */; };
 		046F406918F52A43002BC68A /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 046F406518F52A43002BC68A /* Cocoa.framework */; };
 		046F406A18F52A43002BC68A /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 046F406618F52A43002BC68A /* CoreVideo.framework */; };
 		046F406B18F52A43002BC68A /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 046F406718F52A43002BC68A /* IOKit.framework */; };
@@ -21,6 +20,7 @@
 		04C492C3190E3E5B005ABDA9 /* windowing.c in Sources */ = {isa = PBXBuildFile; fileRef = 04C492C2190E3E5B005ABDA9 /* windowing.c */; };
 		04EACF1219148C6B007DD01E /* backend.c in Sources */ = {isa = PBXBuildFile; fileRef = 04EACF1019148C6B007DD01E /* backend.c */; };
 		04EACF151914924B007DD01E /* gui.c in Sources */ = {isa = PBXBuildFile; fileRef = 04EACF131914924B007DD01E /* gui.c */; };
+		04F2446D19A9862D009E3023 /* libglfw3.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 046F406318F529A9002BC68A /* libglfw3.a */; };
 		CD0A82C318FBA9CB00145912 /* libsndfile.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CD0A82C218FBA9CB00145912 /* libsndfile.a */; };
 		CD17F51C18FBA17A00A7FAC7 /* libportmidi.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = CD17F51B18FBA17A00A7FAC7 /* libportmidi.dylib */; };
 		CD4C4DFD18FBA87E008E0329 /* libfftw3.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 046F406118F523E8002BC68A /* libfftw3.a */; };
@@ -110,8 +110,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				04F2446D19A9862D009E3023 /* libglfw3.a in Frameworks */,
 				046F406218F523E8002BC68A /* libfftw3.a in Frameworks */,
-				046F406418F529A9002BC68A /* libglfw3.a in Frameworks */,
 				046D045919073B080042E6BC /* libfreetype.a in Frameworks */,
 				CD17F51C18FBA17A00A7FAC7 /* libportmidi.dylib in Frameworks */,
 				046F406918F52A43002BC68A /* Cocoa.framework in Frameworks */,
